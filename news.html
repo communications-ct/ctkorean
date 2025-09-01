@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공동체 전체 보기 - 예수성심 천주교 커네티컷 성당</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; color: #333; margin: 0; }
+    a { color: #3A66B0; text-decoration: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    header { background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    h1 { font-size: 1.2rem; margin: 0; }
+    nav a { margin-left: 15px; }
+    h2 { margin: 30px 0 10px; font-size: 1.6rem; }
+    .card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin: 18px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; text-align: left; vertical-align: top; }
+    th { background: #f9fbff; color: #2f4d7a; }
+    tr:hover td { background: #fafafa; }
+    .title-cell { font-weight: 700; }
+    .date-cell { white-space: nowrap; color: #666; }
+    .thumb { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; background: #eee; }
+    .actions a.btn { display: inline-block; padding: 6px 10px; border: 1px solid #3A66B0; color: #3A66B0; border-radius: 6px; font-size: 0.9rem; }
+    .actions a.btn:hover { background: #3A66B0; color: #fff; }
+    .expander { cursor: pointer; color: #3A66B0; }
+    .content-row td { background: #fcfcff; }
+    .content-box { padding: 8px 4px; color: #555; }
+    .pagination { margin-top: 12px; text-align: center; }
+    .pagination button { margin: 0 4px; padding: 6px 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; }
+    .pagination button.active { background: #3A66B0; color: #fff; border-color: #3A66B0; }
+    .section-desc { color: #666; margin-top: -4px; margin-bottom: 10px; font-size: 0.95rem; }
+    footer { border-top: 1px solid #eee; color: #666; font-size: 0.9rem; padding: 20px 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1><a href="./index.html">예수성심 천주교 커네티컷 성당</a></h1>
+      <nav>
+        <a href="./index.html">메인으로</a>
+        <a href="#ann">공지사항</a>
+        <a href="#bul">주보</a>
+        <a href="#alb">앨범</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="ann" class="card">
+      <h2>공지사항</h2>
+      <p class="section-desc">최신 10개씩 표기됩니다. 제목을 클릭하면 본문이 펼쳐집니다.</p>
+      <div class="table-wrap">
+        <table aria-label="공지사항 표">
+          <thead>
+            <tr><th style="width:120px">일자</th><th>제목</th><th style="width:120px">동작</th></tr>
+          </thead>
+          <tbody id="ann-tbody"></tbody>
+        </table>
+        <div id="ann-pager" class="pagination"></div>
+      </div>
+    </section>
+
+    <section id="bul" class="card">
+      <h2>주보</h2>
+      <p class="section-desc">최신 10개씩 표기됩니다. 보기 클릭 시 새 창으로 열립니다.</p>
+      <div class="table-wrap">
+        <table aria-label="주보 표">
+          <thead>
+            <tr><th style="width:120px">일자</th><th>제목</th><th style="width:120px">보기</th></tr>
+          </thead>
+          <tbody id="bul-tbody"></tbody>
+        </table>
+        <div id="bul-pager" class="pagination"></div>
+      </div>
+    </section>
+
+    <section id="alb" class="card">
+      <h2>앨범</h2>
+      <p class="section-desc">최신 10개씩 표기됩니다. 열기 클릭 시 비밀번호 확인 후 이동합니다.</p>
+      <div class="table-wrap">
+        <table aria-label="앨범 표">
+          <thead>
+            <tr><th style="width:120px">일자</th><th>제목</th><th style="width:120px">썸네일</th><th style="width:120px">열기</th></tr>
+          </thead>
+          <tbody id="alb-tbody"></tbody>
+        </table>
+        <div id="alb-pager" class="pagination"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">&copy; 2025 예수성심 천주교 커네티컷 성당</div>
+  </footer>
+
+  <script>
+    // 환경 설정 (배포 URL로 교체하세요)
+    const CONFIG = {
+      ANNOUNCEMENTS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=ann',
+      BULLETINS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=bulletin',
+      ALBUMS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=albums',
+      ALBUM_GATE_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec'
+    };
+
+    const pageSize = 10;
+
+    const fmtDate = (d) => d || '';
+
+    function paginate(data, page) {
+      const total = data.length;
+      const pages = Math.max(1, Math.ceil(total / pageSize));
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+      return { slice: data.slice(start, end), total, pages, page };
+    }
+
+    function renderPager(el, pages, current, onPage) {
+      el.innerHTML = '';
+      for (let i = 1; i <= pages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = String(i);
+        if (i === current) btn.classList.add('active');
+        btn.addEventListener('click', () => onPage(i));
+        el.appendChild(btn);
+      }
+    }
+
+    async function fetchJson(url) {
+      try {
+        const res = await fetch(url, { mode: 'cors' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch (e) {
+        console.warn('fetch error:', e);
+        return [];
+      }
+    }
+
+    // 공지사항
+    async function loadAnnouncements() {
+      if (!CONFIG.ANNOUNCEMENTS_URL) return;
+      const rows = await fetchJson(CONFIG.ANNOUNCEMENTS_URL);
+      // 최신 날짜 우선 정렬 (YYYY-MM-DD 가정)
+      rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+
+      let current = 1;
+      const tbody = document.getElementById('ann-tbody');
+      const pager = document.getElementById('ann-pager');
+
+      const draw = () => {
+        const { slice, pages, page } = paginate(rows, current);
+        tbody.innerHTML = '';
+        slice.forEach((r, idx) => {
+          const tr = document.createElement('tr');
+          const tdDate = document.createElement('td');
+          tdDate.className = 'date-cell';
+          tdDate.textContent = fmtDate(r.date);
+          const tdTitle = document.createElement('td');
+          tdTitle.className = 'title-cell';
+          const exp = document.createElement('span');
+          exp.className = 'expander';
+          exp.textContent = r.title || '공지';
+          tdTitle.appendChild(exp);
+          const tdAct = document.createElement('td');
+          tdAct.className = 'actions';
+          if (r.link) {
+            const a = document.createElement('a');
+            a.className = 'btn'; a.target = '_blank'; a.rel = 'noopener';
+            a.href = r.link; a.textContent = '원문';
+            tdAct.appendChild(a);
+          }
+          tr.appendChild(tdDate); tr.appendChild(tdTitle); tr.appendChild(tdAct);
+          tbody.appendChild(tr);
+
+          // content row
+          const trC = document.createElement('tr');
+          trC.className = 'content-row';
+          const tdC = document.createElement('td'); tdC.colSpan = 3;
+          const box = document.createElement('div'); box.className = 'content-box';
+          box.style.display = 'none';
+          box.innerHTML = (r.body || '').replace(/\n/g, '<br>');
+          tdC.appendChild(box);
+          trC.appendChild(tdC);
+          tbody.appendChild(trC);
+
+          exp.addEventListener('click', () => {
+            box.style.display = (box.style.display === 'none') ? '' : 'none';
+          });
+        });
+        renderPager(pager, pages, page, (p) => { current = p; draw(); });
+      };
+
+      draw();
+    }
+
+    // 주보
+    async function loadBulletins() {
+      if (!CONFIG.BULLETINS_URL) return;
+      const rows = await fetchJson(CONFIG.BULLETINS_URL);
+      rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+
+      let current = 1;
+      const tbody = document.getElementById('bul-tbody');
+      const pager = document.getElementById('bul-pager');
+
+      const draw = () => {
+        const { slice, pages, page } = paginate(rows, current);
+        tbody.innerHTML = '';
+        slice.forEach(r => {
+          const tr = document.createElement('tr');
+          const tdDate = document.createElement('td'); tdDate.className = 'date-cell'; tdDate.textContent = fmtDate(r.date);
+          const tdTitle = document.createElement('td'); tdTitle.className = 'title-cell'; tdTitle.textContent = r.title || '주보';
+          const tdAct = document.createElement('td'); tdAct.className = 'actions';
+          const a = document.createElement('a');
+          a.className = 'btn'; a.target = '_blank'; a.rel = 'noopener';
+          a.href = r.type === 'pdf' ? (r.fileUrl || r.previewUrl || '#') : (r.fileUrl || '#');
+          a.textContent = '보기';
+          tdAct.appendChild(a);
+          tr.appendChild(tdDate); tr.appendChild(tdTitle); tr.appendChild(tdAct);
+          tbody.appendChild(tr);
+        });
+        renderPager(pager, pages, page, (p) => { current = p; draw(); });
+      };
+
+      draw();
+    }
+
+    // 앨범
+    function postToAlbumGate(pw, albumUrl) {
+      if (!CONFIG.ALBUM_GATE_URL) return alert('앨범 게이트가 설정되지 않았습니다.');
+      const f = document.createElement('form');
+      f.method = 'POST';
+      f.action = CONFIG.ALBUM_GATE_URL;
+      f.target = '_blank';
+      const pwi = document.createElement('input'); pwi.type = 'hidden'; pwi.name = 'pw'; pwi.value = pw; f.appendChild(pwi);
+      const al = document.createElement('input'); al.type = 'hidden'; al.name = 'album'; al.value = albumUrl; f.appendChild(al);
+      document.body.appendChild(f);
+      f.submit();
+      setTimeout(() => f.remove(), 500);
+    }
+
+    async function loadAlbums() {
+      if (!CONFIG.ALBUMS_URL) return;
+      const rows = await fetchJson(CONFIG.ALBUMS_URL);
+      // 기대 필드: {date, title, thumbUrl, albumUrl}
+      rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+
+      let current = 1;
+      const tbody = document.getElementById('alb-tbody');
+      const pager = document.getElementById('alb-pager');
+
+      const draw = () => {
+        const { slice, pages, page } = paginate(rows, current);
+        tbody.innerHTML = '';
+        slice.forEach(r => {
+          const tr = document.createElement('tr');
+          const tdDate = document.createElement('td'); tdDate.className = 'date-cell'; tdDate.textContent = fmtDate(r.date);
+          const tdTitle = document.createElement('td'); tdTitle.className = 'title-cell'; tdTitle.textContent = r.title || '앨범';
+          const tdThumb = document.createElement('td');
+          const img = document.createElement('img'); img.className = 'thumb'; img.alt = r.title || '앨범';
+          img.src = r.thumbUrl || 'https://via.placeholder.com/96x72?text=Album';
+          tdThumb.appendChild(img);
+          const tdAct = document.createElement('td'); tdAct.className = 'actions';
+          const btn = document.createElement('a'); btn.href = 'javascript:void(0)'; btn.className = 'btn'; btn.textContent = '열기';
+          btn.addEventListener('click', () => {
+            const pw = prompt('앨범 비밀번호를 입력하세요');
+            if (pw && r.albumUrl) postToAlbumGate(pw, r.albumUrl);
+          });
+          tdAct.appendChild(btn);
+          tr.appendChild(tdDate); tr.appendChild(tdTitle); tr.appendChild(tdThumb); tr.appendChild(tdAct);
+          tbody.appendChild(tr);
+        });
+        renderPager(pager, pages, page, (p) => { current = p; draw(); });
+      };
+
+      draw();
+    }
+
+    (async () => {
+      await Promise.all([
+        loadAnnouncements(),
+        loadBulletins(),
+        loadAlbums()
+      ]);
+    })();
+  </script>
+</body>
+</html>
