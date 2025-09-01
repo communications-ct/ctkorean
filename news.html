@@ -242,6 +242,22 @@
       setTimeout(() => f.remove(), 500);
     }
 
+    function normalizeDriveThumb(url) {
+      if (!url) return url;
+      // Already a Drive thumbnail link
+      if (/drive\.google\.com\/thumbnail\?/.test(url)) return url;
+      // uc?export=view&id=FILE_ID
+      const uc = url.match(/uc\?[^#]*[?&]id=([^&#]+)/);
+      if (uc && uc[1]) return `https://drive.google.com/thumbnail?id=${uc[1]}&sz=w300`;
+      // file/d/FILE_ID/view
+      const m = url.match(/drive\.google\.com\/file\/d\/([^/]+)\/view/);
+      if (m && m[1]) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w300`;
+      // open?id=FILE_ID
+      const o = url.match(/drive\.google\.com\/open\?id=([^&#]+)/);
+      if (o && o[1]) return `https://drive.google.com/thumbnail?id=${o[1]}&sz=w300`;
+      return url;
+    }
+
     async function loadAlbums() {
       if (!CONFIG.ALBUMS_URL) return;
       const rows = await fetchJson(CONFIG.ALBUMS_URL);
@@ -261,7 +277,7 @@
           const tdTitle = document.createElement('td'); tdTitle.className = 'title-cell'; tdTitle.textContent = r.title || '앨범';
           const tdThumb = document.createElement('td');
           const img = document.createElement('img'); img.className = 'thumb'; img.alt = r.title || '앨범';
-          img.src = r.thumbUrl || 'https://via.placeholder.com/96x72?text=Album';
+          img.src = normalizeDriveThumb(r.thumbUrl) || 'https://via.placeholder.com/96x72?text=Album';
           tdThumb.appendChild(img);
           const tdAct = document.createElement('td'); tdAct.className = 'actions';
           const btn = document.createElement('a'); btn.href = 'javascript:void(0)'; btn.className = 'btn'; btn.textContent = '열기';
