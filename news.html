@@ -31,8 +31,14 @@
     .pagination { margin-top: 12px; text-align: center; }
     .pagination button { margin: 0 4px; padding: 6px 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; }
     .pagination button.active { background: #3A66B0; color: #fff; border-color: #3A66B0; }
-    .section-desc { color: #666; margin-top: -4px; margin-bottom: 10px; font-size: 0.95rem; }
-    footer { border-top: 1px solid #eee; color: #666; font-size: 0.9rem; padding: 20px 0; text-align: center; }
+  .section-desc { color: #666; margin-top: -4px; margin-bottom: 10px; font-size: 0.95rem; }
+  footer { border-top: 1px solid #eee; color: #666; font-size: 0.9rem; padding: 20px 0; text-align: center; }
+
+  /* Album inline embed */
+  .embed-row td { background: #f7faff; }
+  .embed-box { display: none; padding: 8px 0 0; }
+  .drive-embed { width: 100%; height: 560px; border: 0; border-radius: 6px; background: #fff; }
+  .hint { color: #666; font-size: 0.9rem; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -79,7 +85,7 @@
 
     <section id="alb" class="card">
       <h2>앨범</h2>
-      <p class="section-desc">최신 10개씩 표기됩니다. 열기 클릭 시 비밀번호 확인 후 이동합니다.</p>
+      <p class="section-desc">최신 10개씩 표기됩니다. 열기 후 비밀번호를 통과하면 이 페이지 안에서 폴더가 바로 보입니다.</p>
       <div class="table-wrap">
         <table aria-label="앨범 표">
           <thead>
@@ -242,6 +248,26 @@
       setTimeout(() => f.remove(), 500);
     }
 
+    async function openAlbumAfterVerify(pw, albumUrl) {
+      if (!CONFIG.ALBUM_GATE_URL) { alert('앨범 게이트가 설정되지 않았습니다.'); return; }
+      try {
+        const body = new URLSearchParams({ pw, album: albumUrl, mode: 'json' });
+        const res = await fetch(CONFIG.ALBUM_GATE_URL, { method: 'POST', body });
+        // 기대 응답: { ok: true, url: 'https://photos.app.goo.gl/...' }
+        const data = await res.json().catch(() => null);
+        if (data && data.ok && data.url) {
+          return { ok: true, url: data.url };
+        }
+        // 실패 시 폴백: 기존 폼 POST로 서버 리다이렉트 시도
+        postToAlbumGate(pw, albumUrl);
+        return { ok: false, url: null };
+      } catch (e) {
+        // 네트워크/JSON 실패 시 폴백
+        postToAlbumGate(pw, albumUrl);
+        return { ok: false, url: null };
+      }
+    }
+
     function normalizeDriveThumb(url) {
       if (!url) return url;
       // Already a Drive thumbnail link
@@ -258,6 +284,24 @@
       return url;
     }
 
+    function extractDriveFolderId(url) {
+      if (!url) return null;
+      // /drive/folders/ID or /drive/u/0/folders/ID
+      let m = url.match(/drive\.google\.com\/drive\/u\/\d+\/folders\/([^/?#]+)/);
+      if (m && m[1]) return m[1];
+      m = url.match(/drive\.google\.com\/drive\/folders\/([^/?#]+)/);
+      if (m && m[1]) return m[1];
+      // open?id=ID or folderview?id=ID
+      m = url.match(/drive\.google\.com\/(?:open|folderview)\?[^#]*[?&]id=([^&#]+)/);
+      if (m && m[1]) return m[1];
+      return null;
+    }
+
+    function toDriveFolderEmbedUrl(url) {
+      const id = extractDriveFolderId(url);
+      return id ? `https://drive.google.com/embeddedfolderview?id=${id}#grid` : null;
+    }
+
     async function loadAlbums() {
       if (!CONFIG.ALBUMS_URL) return;
       const rows = await fetchJson(CONFIG.ALBUMS_URL);
@@ -267,6 +311,7 @@
       let current = 1;
       const tbody = document.getElementById('alb-tbody');
       const pager = document.getElementById('alb-pager');
+      const verified = new Set();
 
       const draw = () => {
         const { slice, pages, page } = paginate(rows, current);
@@ -281,13 +326,59 @@
           tdThumb.appendChild(img);
           const tdAct = document.createElement('td'); tdAct.className = 'actions';
           const btn = document.createElement('a'); btn.href = 'javascript:void(0)'; btn.className = 'btn'; btn.textContent = '열기';
-          btn.addEventListener('click', () => {
-            const pw = prompt('앨범 비밀번호를 입력하세요');
-            if (pw && r.albumUrl) postToAlbumGate(pw, r.albumUrl);
-          });
-          tdAct.appendChild(btn);
           tr.appendChild(tdDate); tr.appendChild(tdTitle); tr.appendChild(tdThumb); tr.appendChild(tdAct);
           tbody.appendChild(tr);
+
+          // Embed row under this album
+          const trE = document.createElement('tr'); trE.className = 'embed-row';
+          const tdE = document.createElement('td'); tdE.colSpan = 4;
+          const box = document.createElement('div'); box.className = 'embed-box';
+          const hint = document.createElement('div'); hint.className = 'hint';
+          hint.textContent = '비밀번호 통과 후 폴더가 이곳에 표시됩니다.';
+          box.appendChild(hint);
+          tdE.appendChild(box);
+          trE.appendChild(tdE);
+          tbody.appendChild(trE);
+
+          const showEmbed = (embedUrl) => {
+            if (!embedUrl) { window.open(r.albumUrl, '_blank', 'noopener'); return; }
+            if (!box.querySelector('iframe')) {
+              const ifr = document.createElement('iframe');
+              ifr.className = 'drive-embed';
+              ifr.loading = 'lazy';
+              ifr.referrerPolicy = 'no-referrer';
+              ifr.src = embedUrl;
+              box.appendChild(ifr);
+            }
+            box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+          };
+
+          btn.addEventListener('click', async () => {
+            if (!r.albumUrl) return;
+            // Toggle if already verified and iframe exists
+            if (verified.has(r.albumUrl) && box.querySelector('iframe')) {
+              box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+              return;
+            }
+            const pw = prompt('앨범 비밀번호를 입력하세요');
+            if (!pw) return;
+            const result = await openAlbumAfterVerify(pw, r.albumUrl);
+            if (result && result.ok) {
+              verified.add(r.albumUrl);
+              const embedUrl = toDriveFolderEmbedUrl(result.url || r.albumUrl);
+              if (embedUrl) {
+                showEmbed(embedUrl);
+              } else {
+                // Not a Drive folder -> open in new tab
+                window.open(result.url || r.albumUrl, '_blank', 'noopener');
+              }
+            } else {
+              // Fallback already attempted form POST which opens new tab
+              alert('임베드 모드에는 서버 JSON 응답이 필요합니다. 새 창으로 열렸습니다.');
+            }
+          });
+
+          tdAct.appendChild(btn);
         });
         renderPager(pager, pages, page, (p) => { current = p; draw(); });
       };
