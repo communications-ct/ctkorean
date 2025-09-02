@@ -6,6 +6,9 @@
   <title>공동체 전체 보기 - 예수성심 천주교 커네티컷 성당</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="preconnect" href="https://script.google.com" />
+  <link rel="dns-prefetch" href="//script.google.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <style>
     body { font-family: 'Noto Sans KR', sans-serif; color: #333; margin: 0; }
     a { color: #3A66B0; text-decoration: none; }
@@ -105,9 +108,13 @@
   <script>
     // 환경 설정 (배포 URL로 교체하세요)
     const CONFIG = {
-      ANNOUNCEMENTS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=ann',
-      BULLETINS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=bulletin',
-      ALBUMS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=albums',
+  // Prefer static local JSON for speed; fallback URLs point to GAS
+  ANNOUNCEMENTS_STATIC: './data/announcements.json',
+  BULLETINS_STATIC: './data/bulletins.json',
+  ALBUMS_STATIC: './data/albums.json',
+  ANNOUNCEMENTS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=ann',
+  BULLETINS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=bulletin',
+  ALBUMS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=albums',
       ALBUM_GATE_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec'
     };
 
@@ -134,6 +141,27 @@
       }
     }
 
+    // Simple sessionStorage cache to reduce network latency across navigations
+  function fetchJsonCached(url, key, ttlMs = 180000) { // default 3 minutes
+      const now = Date.now();
+      try {
+        const raw = sessionStorage.getItem(key);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (cached && cached.t && (now - cached.t) < ttlMs && Array.isArray(cached.data)) {
+            return Promise.resolve(cached.data);
+          }
+        }
+      } catch (_) {}
+      return fetch(url, { mode: 'cors' })
+        .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .then(data => {
+          try { sessionStorage.setItem(key, JSON.stringify({ t: now, data })); } catch (_) {}
+          return data;
+        })
+        .catch(e => { console.warn('fetch error:', e); return []; });
+    }
+
     async function fetchJson(url) {
       try {
         const res = await fetch(url, { mode: 'cors' });
@@ -145,10 +173,24 @@
       }
     }
 
+    // Try local static first; then fallback to live GAS; cache result
+  async function fetchStaticThenLive(staticUrl, liveUrl, key) {
+      // First try static
+      try {
+        const res = await fetch(staticUrl, { cache: 'no-cache' });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) return data;
+        }
+      } catch (_) {}
+      // Fallback to live + cache
+      return fetchJsonCached(liveUrl, key);
+    }
+
     // 공지사항
     async function loadAnnouncements() {
       if (!CONFIG.ANNOUNCEMENTS_URL) return;
-      const rows = await fetchJson(CONFIG.ANNOUNCEMENTS_URL);
+  const rows = await fetchStaticThenLive(CONFIG.ANNOUNCEMENTS_STATIC, CONFIG.ANNOUNCEMENTS_URL, 'ann-v1');
       // 최신 날짜 우선 정렬 (YYYY-MM-DD 가정)
       rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
 
@@ -205,7 +247,7 @@
     // 주보
     async function loadBulletins() {
       if (!CONFIG.BULLETINS_URL) return;
-      const rows = await fetchJson(CONFIG.BULLETINS_URL);
+  const rows = await fetchStaticThenLive(CONFIG.BULLETINS_STATIC, CONFIG.BULLETINS_URL, 'bul-v1');
       rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
 
       let current = 1;
@@ -304,7 +346,7 @@
 
     async function loadAlbums() {
       if (!CONFIG.ALBUMS_URL) return;
-      const rows = await fetchJson(CONFIG.ALBUMS_URL);
+  const rows = await fetchStaticThenLive(CONFIG.ALBUMS_STATIC, CONFIG.ALBUMS_URL, 'alb-v1');
       // 기대 필드: {date, title, thumbUrl, albumUrl}
       rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
 
@@ -321,7 +363,7 @@
           const tdDate = document.createElement('td'); tdDate.className = 'date-cell'; tdDate.textContent = fmtDate(r.date);
           const tdTitle = document.createElement('td'); tdTitle.className = 'title-cell'; tdTitle.textContent = r.title || '앨범';
           const tdThumb = document.createElement('td');
-          const img = document.createElement('img'); img.className = 'thumb'; img.alt = r.title || '앨범';
+          const img = document.createElement('img'); img.className = 'thumb'; img.alt = r.title || '앨범'; img.loading = 'lazy';
           img.src = normalizeDriveThumb(r.thumbUrl) || 'https://via.placeholder.com/96x72?text=Album';
           tdThumb.appendChild(img);
           const tdAct = document.createElement('td'); tdAct.className = 'actions';
@@ -387,11 +429,27 @@
     }
 
     (async () => {
-      await Promise.all([
-        loadAnnouncements(),
-        loadBulletins(),
-        loadAlbums()
-      ]);
+      // Load announcements immediately (top content, likely needed first)
+      loadAnnouncements();
+
+      // Lazy load bulletins and albums when their section enters viewport
+      const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries, obs) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const id = e.target.getAttribute('id');
+          if (id === 'bul') {
+            loadBulletins();
+          } else if (id === 'alb') {
+            loadAlbums();
+          }
+          obs.unobserve(e.target);
+        }
+      }, { rootMargin: '100px 0px' }) : null;
+
+      const bul = document.getElementById('bul');
+      const alb = document.getElementById('alb');
+      if (io && bul) io.observe(bul); else loadBulletins();
+      if (io && alb) io.observe(alb); else loadAlbums();
     })();
   </script>
 </body>
