@@ -496,22 +496,47 @@
                 return await safeFetchJson(liveUrl);
             };
 
+            // 날짜 정렬을 위한 보조 함수들
+            function toTime(d) {
+                if (d == null) return 0;
+                if (typeof d === 'string') {
+                    // ISO-like: 2025-09-02... 우선 처리
+                    const iso = d.match(/^(\d{4}-\d{2}-\d{2})/);
+                    if (iso) return Date.parse(iso[1]);
+                    const t = Date.parse(d);
+                    return Number.isFinite(t) ? t : 0;
+                }
+                if (typeof d === 'number') {
+                    if (d > 1e12) return d; // ms epoch
+                    if (d > 100000) return d; // some other ms-like
+                    // Google Sheets serial days since 1899-12-30
+                    const epoch = Date.UTC(1899, 11, 30);
+                    return epoch + d * 86400000;
+                }
+                if (d instanceof Date && !isNaN(d.getTime())) return d.getTime();
+                return 0;
+            }
+
+            function isUrgentFlag(v) {
+                const u = (v ?? '');
+                if (typeof u === 'boolean') return u;
+                const s = String(u).trim().toLowerCase();
+                return s === 'y' || s === 'yes' || s === 'true' || s === '1';
+            }
+
             function showUrgentBanner(rows) {
                 try {
                     if (!rows || !rows.length) return;
-                    const cand = rows
-                      .filter(r => {
-                          const u = (r.urgent ?? r.Urgent ?? r.긴급);
-                          if (typeof u === 'boolean') return u;
-                          const s = String(u || '').trim().toLowerCase();
-                          return s === 'y' || s === 'yes' || s === 'true' || s === '1';
-                      })
-                      .sort((a,b) => String(b.date).localeCompare(String(a.date)))[0];
-                    if (!cand) return;
+                    // 가장 최신 공지 1건 선택
+                    const latest = [...rows].sort((a,b) => toTime(b.date) - toTime(a.date))[0];
+                    if (!latest) return;
+                    // 최신 공지가 urgent일 때만 배너 표기
+                    const urgent = isUrgentFlag(latest.urgent ?? latest.Urgent ?? latest.긴급);
+                    if (!urgent) return;
                     const bar = document.getElementById('urgent-banner');
                     const titleEl = document.getElementById('urgent-title');
                     if (bar && titleEl) {
-                        titleEl.textContent = (cand.title || '긴급 공지');
+                        titleEl.textContent = (latest.title || '긴급 공지');
                         bar.style.display = '';
                     }
                 } catch {}
