@@ -338,8 +338,9 @@
       setTimeout(() => f.remove(), 500);
     }
 
-    async function openAlbumAfterVerify(pw, albumUrl) {
+    async function openAlbumAfterVerify(pw, albumUrl, opts = {}) {
       if (!CONFIG.ALBUM_GATE_URL) { alert('앨범 게이트가 설정되지 않았습니다.'); return; }
+      const fallbackOnFail = opts.fallbackOnFail !== false; // default true
       try {
         const body = new URLSearchParams({ pw, album: albumUrl, mode: 'json' });
         const res = await fetch(CONFIG.ALBUM_GATE_URL, { method: 'POST', body });
@@ -348,12 +349,12 @@
         if (data && data.ok && data.url) {
           return { ok: true, url: data.url };
         }
-        // 실패 시 폴백: 기존 폼 POST로 서버 리다이렉트 시도
-        postToAlbumGate(pw, albumUrl);
+        // 실패 시 폴백: 기존 폼 POST로 서버 리다이렉트 시도 (옵션)
+        if (fallbackOnFail) postToAlbumGate(pw, albumUrl);
         return { ok: false, url: null };
       } catch (e) {
-        // 네트워크/JSON 실패 시 폴백
-        postToAlbumGate(pw, albumUrl);
+        // 네트워크/JSON 실패 시 폴백 (옵션)
+        if (fallbackOnFail) postToAlbumGate(pw, albumUrl);
         return { ok: false, url: null };
       }
     }
@@ -402,6 +403,12 @@
       const tbody = document.getElementById('alb-tbody');
       const pager = document.getElementById('alb-pager');
       const verified = new Set();
+      // Session-scoped password helpers
+      const getSavedPw = () => {
+        try { return sessionStorage.getItem('albumPw') || ''; } catch (_) { return ''; }
+      };
+      const savePw = (pw) => { try { sessionStorage.setItem('albumPw', pw); } catch (_) {} };
+      const clearPw = () => { try { sessionStorage.removeItem('albumPw'); } catch (_) {} };
 
       const draw = () => {
         const { slice, pages, page } = paginate(rows, current);
@@ -430,7 +437,15 @@
           trE.appendChild(tdE);
           tbody.appendChild(trE);
 
-          const showEmbed = (embedUrl) => {
+          const closeOthers = (exceptEl) => {
+            const albSection = document.getElementById('alb');
+            if (!albSection) return;
+            albSection.querySelectorAll('.embed-box').forEach(el => {
+              if (el !== exceptEl) el.style.display = 'none';
+            });
+          };
+
+          const showEmbed = (embedUrl, forceOpen = false) => {
             if (!embedUrl) { window.open(r.albumUrl, '_blank', 'noopener'); return; }
             if (!box.querySelector('iframe')) {
               const ifr = document.createElement('iframe');
@@ -440,24 +455,53 @@
               ifr.src = embedUrl;
               box.appendChild(ifr);
             }
-            box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+            // Close other open embeds before showing this one
+            closeOthers(box);
+            if (forceOpen) {
+              box.style.display = 'block';
+            } else {
+              box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+            }
           };
 
           btn.addEventListener('click', async () => {
             if (!r.albumUrl) return;
             // Toggle if already verified and iframe exists
             if (verified.has(r.albumUrl) && box.querySelector('iframe')) {
+              // Close others, then toggle this one
+              closeOthers(box);
               box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
               return;
             }
-            const pw = prompt('앨범 비밀번호를 입력하세요');
+            // 1) Try cached password silently
+            let pw = getSavedPw();
+            if (pw) {
+              const cachedTry = await openAlbumAfterVerify(pw, r.albumUrl, { fallbackOnFail: false });
+              if (cachedTry && cachedTry.ok) {
+                verified.add(r.albumUrl);
+                const embedUrl = toDriveFolderEmbedUrl(cachedTry.url || r.albumUrl);
+                if (embedUrl) {
+                  showEmbed(embedUrl, true);
+                } else {
+                  window.open(cachedTry.url || r.albumUrl, '_blank', 'noopener');
+                }
+                return;
+              } else {
+                // Cached password invalid -> clear and prompt once
+                clearPw();
+              }
+            }
+
+            // 2) Prompt once
+            pw = prompt('앨범 비밀번호를 입력하세요');
             if (!pw) return;
-            const result = await openAlbumAfterVerify(pw, r.albumUrl);
+            const result = await openAlbumAfterVerify(pw, r.albumUrl); // fallback allowed
             if (result && result.ok) {
+              savePw(pw);
               verified.add(r.albumUrl);
               const embedUrl = toDriveFolderEmbedUrl(result.url || r.albumUrl);
               if (embedUrl) {
-                showEmbed(embedUrl);
+                showEmbed(embedUrl, true);
               } else {
                 // Not a Drive folder -> open in new tab
                 window.open(result.url || r.albumUrl, '_blank', 'noopener');
