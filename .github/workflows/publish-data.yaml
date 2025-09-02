@@ -1,0 +1,27 @@
+name: Publish static data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1' # Every Monday 09:00 UTC (~weekly)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Publish data
+        run: |
+          node tools/publish-data.js
+      - name: Commit and push if changed
+        run: |
+          git config user.name "communications-ct"
+          git config user.email "communications@ctkoreancatholic.org"
+          git add data/*.json
+          git diff --quiet && echo "No changes" || git commit -m "chore(data): publish static JSON"
+          git push
