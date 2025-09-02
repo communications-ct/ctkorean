@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://script.google.com" />
   <link rel="dns-prefetch" href="//script.google.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Basic hardening: CSP and Referrer Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://via.placeholder.com https://drive.google.com https://*.googleusercontent.com; script-src 'self' 'unsafe-inline' https://script.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; frame-src https://drive.google.com; connect-src 'self' https://script.google.com;" />
+  <meta name="referrer" content="no-referrer" />
   <style>
     body { font-family: 'Noto Sans KR', sans-serif; color: #333; margin: 0; }
     a { color: #3A66B0; text-decoration: none; }
@@ -170,6 +173,11 @@
 
     const dateKey = (d) => fmtDate(d) || '';
 
+    // Escape HTML to prevent XSS when rendering body content from Sheets
+    function escapeHTML(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     function paginate(data, page) {
       const total = data.length;
       const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -277,7 +285,9 @@
           const tdC = document.createElement('td'); tdC.colSpan = 3;
           const box = document.createElement('div'); box.className = 'content-box';
           box.style.display = 'none';
-          box.innerHTML = (r.body || '').replace(/\n/g, '<br>');
+          // Safely render body with newline -> <br>
+          const safeBody = escapeHTML(r.body || '').replace(/\n/g, '<br>');
+          box.innerHTML = safeBody;
           tdC.appendChild(box);
           trC.appendChild(tdC);
           tbody.appendChild(trC);
@@ -403,11 +413,29 @@
       const tbody = document.getElementById('alb-tbody');
       const pager = document.getElementById('alb-pager');
       const verified = new Set();
-      // Session-scoped password helpers
+      // Session-scoped password helpers with short TTL (30 minutes)
+      const PW_TTL = 30 * 60 * 1000;
       const getSavedPw = () => {
-        try { return sessionStorage.getItem('albumPw') || ''; } catch (_) { return ''; }
+        try {
+          const raw = sessionStorage.getItem('albumPw');
+          if (!raw) return '';
+          // Backward compatible: plain string or JSON {pw,t}
+          if (raw.startsWith('{')) {
+            const obj = JSON.parse(raw);
+            const now = Date.now();
+            if (obj && typeof obj.pw === 'string' && typeof obj.t === 'number' && (now - obj.t) < PW_TTL) {
+              return obj.pw;
+            }
+            // expired
+            sessionStorage.removeItem('albumPw');
+            return '';
+          }
+          return raw; // legacy
+        } catch (_) { return ''; }
       };
-      const savePw = (pw) => { try { sessionStorage.setItem('albumPw', pw); } catch (_) {} };
+      const savePw = (pw) => {
+        try { sessionStorage.setItem('albumPw', JSON.stringify({ pw, t: Date.now() })); } catch (_) {}
+      };
       const clearPw = () => { try { sessionStorage.removeItem('albumPw'); } catch (_) {} };
 
       const draw = () => {
