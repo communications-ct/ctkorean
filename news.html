@@ -120,7 +120,55 @@
 
     const pageSize = 10;
 
-    const fmtDate = (d) => d || '';
+    function fmtDate(d) {
+      if (d == null) return '';
+      // If already like 2025-09-02... just slice
+      if (typeof d === 'string') {
+        const s = d.trim();
+        const iso = s.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (iso) return iso[1];
+        // Handle M/D/YYYY or MM/DD/YYYY
+        const mdY = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+        if (mdY) {
+          const y = mdY[3].length === 2 ? ('20' + mdY[3]) : mdY[3];
+          const m = String(mdY[1]).padStart(2, '0');
+          const dd = String(mdY[2]).padStart(2, '0');
+          return `${y}-${m}-${dd}`;
+        }
+        const d2 = new Date(s);
+        if (!isNaN(d2.getTime())) {
+          const y = d2.getFullYear();
+          const m = String(d2.getMonth() + 1).padStart(2, '0');
+          const dd = String(d2.getDate()).padStart(2, '0');
+          return `${y}-${m}-${dd}`;
+        }
+        return s; // unknown format -> return as-is
+      }
+      if (typeof d === 'number') {
+        // Heuristic: large => ms epoch; small => Google Sheets serial (days since 1899-12-30)
+        let dateObj;
+        if (d > 1e12) dateObj = new Date(d); else if (d > 10000) dateObj = new Date(d); else {
+          const epoch = new Date(Date.UTC(1899, 11, 30));
+          dateObj = new Date(epoch.getTime() + d * 86400000);
+        }
+        if (!isNaN(dateObj.getTime())) {
+          const y = dateObj.getFullYear();
+          const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          return `${y}-${m}-${dd}`;
+        }
+        return String(d);
+      }
+      if (d instanceof Date && !isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dd}`;
+      }
+      return String(d);
+    }
+
+    const dateKey = (d) => fmtDate(d) || '';
 
     function paginate(data, page) {
       const total = data.length;
@@ -192,7 +240,7 @@
       if (!CONFIG.ANNOUNCEMENTS_URL) return;
   const rows = await fetchStaticThenLive(CONFIG.ANNOUNCEMENTS_STATIC, CONFIG.ANNOUNCEMENTS_URL, 'ann-v1');
       // 최신 날짜 우선 정렬 (YYYY-MM-DD 가정)
-      rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  rows.sort((a,b) => dateKey(b.date).localeCompare(dateKey(a.date)));
 
       let current = 1;
       const tbody = document.getElementById('ann-tbody');
@@ -248,7 +296,7 @@
     async function loadBulletins() {
       if (!CONFIG.BULLETINS_URL) return;
   const rows = await fetchStaticThenLive(CONFIG.BULLETINS_STATIC, CONFIG.BULLETINS_URL, 'bul-v1');
-      rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  rows.sort((a,b) => dateKey(b.date).localeCompare(dateKey(a.date)));
 
       let current = 1;
       const tbody = document.getElementById('bul-tbody');
@@ -348,7 +396,7 @@
       if (!CONFIG.ALBUMS_URL) return;
   const rows = await fetchStaticThenLive(CONFIG.ALBUMS_STATIC, CONFIG.ALBUMS_URL, 'alb-v1');
       // 기대 필드: {date, title, thumbUrl, albumUrl}
-      rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  rows.sort((a,b) => dateKey(b.date).localeCompare(dateKey(a.date)));
 
       let current = 1;
       const tbody = document.getElementById('alb-tbody');
