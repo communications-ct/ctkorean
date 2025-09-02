@@ -425,6 +425,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 사이트 동적 설정 값 (Apps Script 배포 후 값 입력)
             const CONFIG = {
+                // 정적 JSON 우선 사용, 부족 시 라이브로 폴백
+                ANNOUNCEMENTS_STATIC: './data/announcements.json',
                 ANNOUNCEMENTS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=ann',
                 BULLETINS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=bulletin',
                 ALBUM_GATE_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec'
@@ -482,6 +484,18 @@
                 }
             };
 
+            // 정적 파일 먼저 시도 후, 비어 있으면 라이브로 폴백
+            const fetchStaticThenLive = async (staticUrl, liveUrl) => {
+                try {
+                    const res = await fetch(staticUrl, { cache: 'no-cache' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) return data;
+                    }
+                } catch (_) { /* noop */ }
+                return await safeFetchJson(liveUrl);
+            };
+
             function showUrgentBanner(rows) {
                 try {
                     if (!rows || !rows.length) return;
@@ -504,10 +518,8 @@
             }
 
             (async () => {
-                if (CONFIG.ANNOUNCEMENTS_URL) {
-                    const data = await safeFetchJson(CONFIG.ANNOUNCEMENTS_URL);
-                    if (data) { showUrgentBanner(data); }
-                }
+                const data = await fetchStaticThenLive(CONFIG.ANNOUNCEMENTS_STATIC, CONFIG.ANNOUNCEMENTS_URL);
+                if (data) { showUrgentBanner(data); }
             })();
 
         });
