@@ -231,15 +231,24 @@ function getAlbums_() {
     var folder = subFolders.next();
     var files = folder.getFiles();
     var thumbUrl = '';
+    var photos = [];
 
-    // Use first image as thumbnail
+    // Collect all images in folder
     while (files.hasNext()) {
       var file = files.next();
       if (file.getMimeType().indexOf('image') !== -1) {
-        thumbUrl = 'https://drive.google.com/file/d/' + file.getId() + '/view';
-        break;
+        if (!thumbUrl) {
+          thumbUrl = 'https://drive.google.com/file/d/' + file.getId() + '/view';
+        }
+        photos.push({
+          id: file.getId(),
+          name: file.getName()
+        });
       }
     }
+
+    // Sort photos by name
+    photos.sort(function(a, b) { return a.name.localeCompare(b.name); });
 
     var name = folder.getName();
     var match = name.match(/^(\d{4}[-.]?\d{2}[-.]?\d{2})/);
@@ -249,7 +258,8 @@ function getAlbums_() {
       date: dateStr,
       title: name,
       albumUrl: 'https://drive.google.com/drive/folders/' + folder.getId(),
-      thumbUrl: thumbUrl
+      thumbUrl: thumbUrl,
+      photos: photos
     });
   }
 

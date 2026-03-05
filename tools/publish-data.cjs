@@ -100,6 +100,7 @@ async function processAlbums(albums, thumbsDir) {
       title: item.title,
       albumId: folderId || null,
       thumbUrl: localThumb || null,
+      photos: item.photos || [],
       // NOTE: albumUrl (full Drive URL) is intentionally NOT included
     });
   }
