@@ -7,6 +7,7 @@ interface Announcement {
   body: string;
   link: string;
   urgent: number | string;
+  images?: string[];
 }
 
 interface Props {
@@ -69,6 +70,20 @@ const sorted = [...announcements].sort((a, b) => {
         </summary>
         <div class="px-4 pb-4 border-t border-gray-100">
           <div class="text-gray-600 text-sm leading-relaxed pt-3" set:html={formatBody(ann.body)} />
+          {ann.images && ann.images.length > 0 && (
+            <div class="flex flex-wrap gap-2 mt-3">
+              {ann.images.map(src => (
+                <a href={src} target="_blank" rel="noopener noreferrer" class="block">
+                  <img
+                    src={src}
+                    alt=""
+                    class="rounded-lg border border-gray-200 object-cover w-32 h-32 sm:w-40 sm:h-40 hover:opacity-90 transition-opacity"
+                    loading="lazy"
+                  />
+                </a>
+              ))}
+            </div>
+          )}
           {ann.link && (
             <a
               href={ann.link}

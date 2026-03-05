@@ -6,6 +6,7 @@
  * Security: Google Drive URLs are stripped from the served JSON.
  * - Thumbnails: downloaded to public/images/thumbs/{fileId}.jpg
  * - Bulletin PDFs: downloaded to public/data/pdfs/{fileId}.pdf
+ * - Announcement images: downloaded to public/images/announcements/{fileId}.jpg
  * - Album folder URLs: stored as ID only, never full URL
  */
 const fs = require('fs');
@@ -136,6 +137,43 @@ async function processBulletins(bulletins, pdfsDir) {
   return processed;
 }
 
+async function processAnnouncements(announcements, imagesDir) {
+  const processed = [];
+  for (const item of announcements) {
+    const images = [];
+
+    if (item.images && Array.isArray(item.images)) {
+      for (const imgUrl of item.images) {
+        const fileId = extractFileId(imgUrl);
+        if (!fileId) continue;
+
+        const destFile = path.join(imagesDir, `${fileId}.jpg`);
+        const localPath = `${CONFIG.BASE_PATH}/images/announcements/${fileId}.jpg`;
+
+        if (!fs.existsSync(destFile)) {
+          const downloadUrl = `https://lh3.googleusercontent.com/d/${fileId}=w800`;
+          console.log(`  Downloading announcement image: ${fileId}`);
+          const ok = await downloadFile(downloadUrl, destFile);
+          if (ok) images.push(localPath);
+        } else {
+          images.push(localPath);
+        }
+      }
+    }
+
+    processed.push({
+      date: item.date,
+      title: item.title,
+      body: item.body,
+      link: item.link,
+      urgent: item.urgent,
+      images: images.length > 0 ? images : undefined,
+      // NOTE: original Drive image URLs intentionally stripped
+    });
+  }
+  return processed;
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -145,10 +183,11 @@ async function main() {
   const publicDir = path.resolve(root, 'public', 'data');
   const legacyDir = path.resolve(root, 'data');
   const thumbsDir = path.resolve(root, 'public', 'images', 'thumbs');
+  const annImagesDir = path.resolve(root, 'public', 'images', 'announcements');
   const pdfsDir = path.resolve(root, 'public', 'data', 'pdfs');
 
   // Ensure directories
-  for (const dir of [publicDir, legacyDir, thumbsDir, pdfsDir]) {
+  for (const dir of [publicDir, legacyDir, thumbsDir, annImagesDir, pdfsDir]) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   }
 
@@ -169,14 +208,9 @@ async function main() {
   console.log('Processing bulletins (downloading PDFs)...');
   const bulletins = await processBulletins(raw.bul || [], pdfsDir);
 
-  // Announcements: no Drive URLs, pass through as-is
-  const announcements = (raw.ann || []).map(item => ({
-    date: item.date,
-    title: item.title,
-    body: item.body,
-    link: item.link,
-    urgent: item.urgent,
-  }));
+  // Announcements: download images, strip Drive URLs
+  console.log('Processing announcements (downloading images)...');
+  const announcements = await processAnnouncements(raw.ann || [], annImagesDir);
 
   // Write sanitized JSON
   const files = [
@@ -191,8 +225,9 @@ async function main() {
     fs.writeFileSync(path.join(legacyDir, filename), json);
   }
 
+  const annImageCount = announcements.reduce((n, a) => n + (a.images ? a.images.length : 0), 0);
   console.log(`Published data:
-  - ${announcements.length} announcements
+  - ${announcements.length} announcements (${annImageCount} images downloaded)
   - ${bulletins.length} bulletins (PDFs downloaded)
   - ${albums.length} albums (thumbnails downloaded)
   - Drive URLs stripped from all served JSON`);

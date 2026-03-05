@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>성당 관리자 패널</title>
+  <style>
+    :root {
+      --primary: #3A66B0;
+      --primary-dark: #2C4F8A;
+      --danger: #DC2626;
+      --danger-dark: #B91C1C;
+      --success: #16A34A;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-500: #6B7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.6;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+    h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 12px; }
+    .subtitle { font-size: 0.875rem; color: var(--gray-500); margin-bottom: 24px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px; border: none; border-radius: var(--radius);
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: var(--danger-dark); }
+    .btn-outline {
+      background: #fff; color: var(--gray-700);
+      border: 1px solid var(--gray-300);
+    }
+    .btn-outline:hover:not(:disabled) { background: var(--gray-100); }
+    .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
+
+    /* Forms */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 4px; color: var(--gray-700); }
+    input[type="text"], input[type="password"], input[type="date"], textarea, select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300);
+      border-radius: var(--radius); font-size: 0.875rem; font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(58, 102, 176, 0.1);
+    }
+    textarea { resize: vertical; min-height: 120px; }
+    .checkbox-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.875rem; cursor: pointer;
+    }
+    .checkbox-label input { width: auto; }
+
+    /* Cards */
+    .card {
+      background: #fff; border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      padding: 16px; margin-bottom: 12px;
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .card-title { font-weight: 600; font-size: 0.9375rem; }
+    .card-date { font-size: 0.8125rem; color: var(--gray-500); }
+    .card-body { font-size: 0.875rem; color: var(--gray-700); }
+    .card-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .badge-urgent {
+      display: inline-block; padding: 2px 8px; border-radius: 12px;
+      background: var(--danger); color: #fff; font-size: 0.75rem; font-weight: 700;
+    }
+
+    /* Image preview */
+    .image-preview-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .image-preview-item {
+      position: relative; width: 80px; height: 80px;
+      border-radius: var(--radius); overflow: hidden; border: 1px solid var(--gray-200);
+    }
+    .image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .image-preview-item .remove-btn {
+      position: absolute; top: 2px; right: 2px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: #fff; border: none;
+      font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Alerts */
+    .alert { padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 0.875rem; }
+    .alert-error { background: #FEE2E2; color: var(--danger); border: 1px solid #FECACA; }
+    .alert-success { background: #DCFCE7; color: var(--success); border: 1px solid #BBF7D0; }
+
+    /* Loading */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid var(--gray-300); border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sections */
+    .section { display: none; }
+    .section.active { display: block; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container { padding: 12px; }
+      .card-header { flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>&#9769; 예수성심 성당 관리자</h1>
+    <p class="subtitle">공지사항 관리 패널</p>
+
+    <div id="alert-area"></div>
+
+    <!-- ===== LOGIN ===== -->
+    <div id="section-login" class="section active">
+      <div class="card">
+        <h2>로그인</h2>
+        <div class="form-group">
+          <label for="login-password">관리자 비밀번호</label>
+          <input type="password" id="login-password" placeholder="비밀번호를 입력하세요" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">로그인</button>
+      </div>
+    </div>
+
+    <!-- ===== LIST ===== -->
+    <div id="section-list" class="section">
+      <div class="toolbar">
+        <h2>공지사항 목록</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="showEditor(null)">+ 새 공지</button>
+          <button class="btn btn-outline btn-sm" onclick="handleLogout()">로그아웃</button>
+        </div>
+      </div>
+      <div id="post-list"></div>
+    </div>
+
+    <!-- ===== EDITOR ===== -->
+    <div id="section-editor" class="section">
+      <div class="toolbar">
+        <h2 id="editor-title">새 공지사항</h2>
+        <button class="btn btn-outline btn-sm" onclick="showList()">&#8592; 목록으로</button>
+      </div>
+      <div class="card">
+        <input type="hidden" id="edit-original-date">
+        <input type="hidden" id="edit-original-title">
+        <input type="hidden" id="edit-mode" value="create">
+
+        <div class="form-group">
+          <label for="edit-date">날짜</label>
+          <input type="date" id="edit-date">
+        </div>
+        <div class="form-group">
+          <label for="edit-title-input">제목</label>
+          <input type="text" id="edit-title-input" placeholder="공지사항 제목">
+        </div>
+        <div class="form-group">
+          <label for="edit-body">내용</label>
+          <textarea id="edit-body" placeholder="공지사항 내용을 입력하세요"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="edit-link">링크 (선택)</label>
+          <input type="text" id="edit-link" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="edit-urgent">
+            <span>긴급 공지 (상단 고정 + 빨간 배지)</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>이미지 첨부 (선택)</label>
+          <input type="file" id="edit-images" accept="image/*" multiple onchange="handleImageSelect(this)">
+          <div class="image-preview-list" id="image-previews"></div>
+          <input type="hidden" id="edit-image-ids">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button class="btn btn-primary" id="btn-save" onclick="handleSave()">저장</button>
+          <button class="btn btn-outline" onclick="showList()">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // State
+    // =========================================================================
+    var password = '';
+    var posts = [];
+    var uploadedImageIds = [];
+    var pendingUploads = 0;
+
+    // =========================================================================
+    // API
+    // =========================================================================
+    function apiCall(payload, callback) {
+      payload.password = password;
+      google.script.run
+        .withSuccessHandler(function(resp) {
+          if (typeof resp === 'string') resp = JSON.parse(resp);
+          callback(null, resp);
+        })
+        .withFailureHandler(function(err) {
+          callback(err);
+        })
+        .doPost({ postData: { contents: JSON.stringify(payload) } });
+    }
+
+    // Direct server call (GAS client-to-server)
+    function serverCall(payload, callback) {
+      payload.password = password;
+      var body = JSON.stringify(payload);
+
+      // Use google.script.run to call a server function
+      google.script.run
+        .withSuccessHandler(function(result) {
+          callback(null, result);
+        })
+        .withFailureHandler(function(err) {
+          callback(err);
+        })
+        .processAdminRequest(body);
+    }
+
+    // =========================================================================
+    // Auth
+    // =========================================================================
+    function handleLogin() {
+      var pw = document.getElementById('login-password').value.trim();
+      if (!pw) { showAlert('비밀번호를 입력하세요.', 'error'); return; }
+
+      setBtnLoading('btn-login', true);
+      password = pw;
+
+      serverCall({ action: 'login' }, function(err, resp) {
+        setBtnLoading('btn-login', false);
+        if (err || !resp.success) {
+          password = '';
+          showAlert((resp && resp.error) || '로그인에 실패했습니다.', 'error');
+          return;
+        }
+        sessionStorage.setItem('cms_auth', pw);
+        loadList();
+      });
+    }
+
+    function handleLogout() {
+      password = '';
+      sessionStorage.removeItem('cms_auth');
+      showSection('login');
+    }
+
+    // =========================================================================
+    // List
+    // =========================================================================
+    function loadList() {
+      showSection('list');
+      document.getElementById('post-list').innerHTML = '<div style="text-align:center;padding:32px;"><span class="spinner"></span> 불러오는 중...</div>';
+
+      serverCall({ action: 'list' }, function(err, resp) {
+        if (err || !resp.success) {
+          showAlert('목록을 불러올 수 없습니다.', 'error');
+          return;
+        }
+        posts = resp.data || [];
+        renderList();
+      });
+    }
+
+    function renderList() {
+      var el = document.getElementById('post-list');
+      if (posts.length === 0) {
+        el.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:32px;">등록된 공지사항이 없습니다.</p>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < posts.length; i++) {
+        var p = posts[i];
+        var dateStr = p.date ? new Date(p.date).toLocaleDateString('ko-KR') : '';
+        var isUrgent = p.urgent === 1 || p.urgent === '1' || p.urgent === 'y';
+        var bodyPreview = (p.body || '').replace(/\n/g, ' ').substring(0, 80);
+        var imgCount = (p.images && p.images.length) || 0;
+
+        html += '<div class="card">';
+        html += '<div class="card-header">';
+        html += '<div>';
+        if (isUrgent) html += '<span class="badge-urgent">긴급</span> ';
+        html += '<span class="card-title">' + escapeHtml(p.title) + '</span>';
+        if (imgCount > 0) html += ' <span style="color:var(--gray-500);font-size:0.8125rem;">(' + imgCount + '장)</span>';
+        html += '</div>';
+        html += '<span class="card-date">' + dateStr + '</span>';
+        html += '</div>';
+        if (bodyPreview) html += '<div class="card-body">' + escapeHtml(bodyPreview) + (p.body.length > 80 ? '...' : '') + '</div>';
+        html += '<div class="card-actions">';
+        html += '<button class="btn btn-outline btn-sm" onclick="showEditor(' + i + ')">수정</button>';
+        html += '<button class="btn btn-danger btn-sm" onclick="handleDelete(' + i + ')">삭제</button>';
+        html += '</div>';
+        html += '</div>';
+      }
+      el.innerHTML = html;
+    }
+
+    // =========================================================================
+    // Editor
+    // =========================================================================
+    function showEditor(index) {
+      uploadedImageIds = [];
+      pendingUploads = 0;
+      document.getElementById('image-previews').innerHTML = '';
+      document.getElementById('edit-images').value = '';
+
+      if (index === null || index === undefined) {
+        // Create mode
+        document.getElementById('edit-mode').value = 'create';
+        document.getElementById('editor-title').textContent = '새 공지사항';
+        document.getElementById('edit-date').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('edit-title-input').value = '';
+        document.getElementById('edit-body').value = '';
+        document.getElementById('edit-link').value = '';
+        document.getElementById('edit-urgent').checked = false;
+        document.getElementById('edit-original-date').value = '';
+        document.getElementById('edit-original-title').value = '';
+      } else {
+        // Edit mode
+        var p = posts[index];
+        document.getElementById('edit-mode').value = 'update';
+        document.getElementById('editor-title').textContent = '공지사항 수정';
+        document.getElementById('edit-date').value = p.date ? new Date(p.date).toISOString().slice(0, 10) : '';
+        document.getElementById('edit-title-input').value = p.title || '';
+        document.getElementById('edit-body').value = p.body || '';
+        document.getElementById('edit-link').value = p.link || '';
+        document.getElementById('edit-urgent').checked = (p.urgent === 1 || p.urgent === '1' || p.urgent === 'y');
+        document.getElementById('edit-original-date').value = p.date || '';
+        document.getElementById('edit-original-title').value = p.title || '';
+
+        // Show existing images
+        if (p.images && p.images.length) {
+          for (var i = 0; i < p.images.length; i++) {
+            var url = p.images[i];
+            var m = url.match(/\/d\/([A-Za-z0-9_-]+)/);
+            if (m) {
+              uploadedImageIds.push(m[1]);
+              addImagePreview(m[1], 'https://lh3.googleusercontent.com/d/' + m[1] + '=w200');
+            }
+          }
+        }
+      }
+      showSection('editor');
+    }
+
+    function handleSave() {
+      if (pendingUploads > 0) {
+        showAlert('이미지 업로드 중입니다. 잠시 후 다시 시도해주세요.', 'error');
+        return;
+      }
+
+      var mode = document.getElementById('edit-mode').value;
+      var payload = {
+        action: mode,
+        date: document.getElementById('edit-date').value,
+        title: document.getElementById('edit-title-input').value.trim(),
+        body: document.getElementById('edit-body').value,
+        link: document.getElementById('edit-link').value.trim(),
+        urgent: document.getElementById('edit-urgent').checked,
+        images: uploadedImageIds
+      };
+
+      if (!payload.date || !payload.title) {
+        showAlert('날짜와 제목은 필수입니다.', 'error');
+        return;
+      }
+
+      if (mode === 'update') {
+        payload.originalDate = document.getElementById('edit-original-date').value;
+        payload.originalTitle = document.getElementById('edit-original-title').value;
+      }
+
+      setBtnLoading('btn-save', true);
+      serverCall(payload, function(err, resp) {
+        setBtnLoading('btn-save', false);
+        if (err || !resp.success) {
+          showAlert((resp && resp.error) || '저장에 실패했습니다.', 'error');
+          return;
+        }
+        showAlert(resp.message || '저장되었습니다.', 'success');
+        loadList();
+      });
+    }
+
+    function handleDelete(index) {
+      var p = posts[index];
+      if (!confirm('"' + p.title + '" 공지를 삭제하시겠습니까?')) return;
+
+      serverCall({
+        action: 'delete',
+        date: p.date,
+        title: p.title
+      }, function(err, resp) {
+        if (err || !resp.success) {
+          showAlert((resp && resp.error) || '삭제에 실패했습니다.', 'error');
+          return;
+        }
+        showAlert(resp.message || '삭제되었습니다.', 'success');
+        loadList();
+      });
+    }
+
+    // =========================================================================
+    // Image Upload
+    // =========================================================================
+    function handleImageSelect(input) {
+      var files = input.files;
+      for (var i = 0; i < files.length; i++) {
+        uploadSingleImage(files[i]);
+      }
+      input.value = '';
+    }
+
+    function uploadSingleImage(file) {
+      if (file.size > 10 * 1024 * 1024) {
+        showAlert('이미지 크기가 10MB를 초과합니다: ' + file.name, 'error');
+        return;
+      }
+
+      pendingUploads++;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var base64 = e.target.result.split(',')[1];
+
+        serverCall({
+          action: 'uploadImage',
+          fileName: file.name,
+          mimeType: file.type,
+          data: base64
+        }, function(err, resp) {
+          pendingUploads--;
+          if (err || !resp.success) {
+            showAlert('이미지 업로드 실패: ' + file.name, 'error');
+            return;
+          }
+          uploadedImageIds.push(resp.fileId);
+          addImagePreview(resp.fileId, 'https://lh3.googleusercontent.com/d/' + resp.fileId + '=w200');
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function addImagePreview(fileId, src) {
+      var container = document.getElementById('image-previews');
+      var div = document.createElement('div');
+      div.className = 'image-preview-item';
+      div.dataset.fileId = fileId;
+      div.innerHTML = '<img src="' + src + '" alt="">'
+        + '<button class="remove-btn" onclick="removeImage(this, \'' + fileId + '\')">&times;</button>';
+      container.appendChild(div);
+    }
+
+    function removeImage(btn, fileId) {
+      var idx = uploadedImageIds.indexOf(fileId);
+      if (idx !== -1) uploadedImageIds.splice(idx, 1);
+      btn.parentElement.remove();
+    }
+
+    // =========================================================================
+    // UI Helpers
+    // =========================================================================
+    function showSection(name) {
+      var sections = document.querySelectorAll('.section');
+      for (var i = 0; i < sections.length; i++) {
+        sections[i].classList.remove('active');
+      }
+      document.getElementById('section-' + name).classList.add('active');
+    }
+
+    function showList() {
+      showSection('list');
+    }
+
+    function showAlert(msg, type) {
+      var area = document.getElementById('alert-area');
+      area.innerHTML = '<div class="alert alert-' + type + '">' + escapeHtml(msg) + '</div>';
+      setTimeout(function() { area.innerHTML = ''; }, 5000);
+      window.scrollTo(0, 0);
+    }
+
+    function setBtnLoading(id, loading) {
+      var btn = document.getElementById(id);
+      if (loading) {
+        btn.disabled = true;
+        btn.dataset.origText = btn.textContent;
+        btn.innerHTML = '<span class="spinner"></span> 처리 중...';
+      } else {
+        btn.disabled = false;
+        btn.textContent = btn.dataset.origText || '저장';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // =========================================================================
+    // Init
+    // =========================================================================
+    (function() {
+      // Restore session
+      var saved = sessionStorage.getItem('cms_auth');
+      if (saved) {
+        password = saved;
+        loadList();
+      }
+
+      // Enter key on login
+      document.getElementById('login-password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') handleLogin();
+      });
+    })();
+  </script>
+</body>
+</html>
