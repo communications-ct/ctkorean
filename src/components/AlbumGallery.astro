@@ -1,17 +1,12 @@
 ---
 import { t, formatDate } from '../i18n/utils';
 
-interface Photo {
-  id: string;
-  name: string;
-}
-
 interface Album {
   date: string;
   title: string;
   albumId: string;
   thumbUrl: string;
-  photos?: Photo[];
+  photoCount?: number;
 }
 
 interface Props {
@@ -20,6 +15,7 @@ interface Props {
 }
 
 const { albums, locale } = Astro.props;
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
 ---
@@ -29,62 +25,53 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
 ) : (
   <>
     <div class="space-y-3">
-      {sorted.map((album, idx) => (
-        <button
-          type="button"
-          class="card w-full flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50 transition-colors text-left album-open-btn"
-          data-album-idx={idx}
-        >
-          <img
-            src={album.thumbUrl}
-            alt={album.title}
-            class="w-16 h-12 object-cover rounded shrink-0"
-            loading="lazy"
-          />
-          <div class="flex-1 min-w-0">
-            <span class="font-medium text-gray-900 truncate block">{album.title}</span>
-            <span class="text-sm text-gray-400">
-              {formatDate(album.date, locale)}
-              {album.photos && album.photos.length > 0 && (
-                <span class="ml-1 text-gray-300">· {album.photos.length}{locale === 'ko' ? '장' : ' photos'}</span>
-              )}
-            </span>
+      {sorted.map(album => (
+        <details class="card group album-details" data-album-id={album.albumId}>
+          <summary class="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
+            <img
+              src={album.thumbUrl}
+              alt={album.title}
+              class="w-16 h-12 object-cover rounded shrink-0"
+              loading="lazy"
+            />
+            <div class="flex-1 min-w-0">
+              <span class="font-medium text-gray-900 truncate block">{album.title}</span>
+              <span class="text-sm text-gray-400">
+                {formatDate(album.date, locale)}
+                {album.photoCount && album.photoCount > 0 && (
+                  <span class="ml-1 text-gray-300">· {album.photoCount}{locale === 'ko' ? '장' : ' photos'}</span>
+                )}
+              </span>
+            </div>
+            <svg class="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </summary>
+          <div class="border-t border-gray-100 p-4">
+            <!-- Loading placeholder -->
+            <div class="album-loading flex items-center justify-center py-8">
+              <div class="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              <span class="ml-2 text-gray-400 text-sm">{locale === 'ko' ? '사진을 불러오는 중...' : 'Loading...'}</span>
+            </div>
+            <!-- Photo grid (filled by JS) -->
+            <div class="album-grid hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3"></div>
+            <!-- Drive link -->
+            <div class="mt-3 text-center">
+              <a
+                href={`https://drive.google.com/drive/folders/${album.albumId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary-500 text-sm font-medium hover:underline"
+              >
+                {locale === 'ko' ? 'Google Drive에서 보기' : 'View on Google Drive'} &rarr;
+              </a>
+            </div>
           </div>
-          <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
+        </details>
       ))}
     </div>
 
-    <!-- Album Gallery Modal -->
-    <div id="album-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto bg-gray-50">
-      <!-- Sticky header -->
-      <div class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-white shadow-sm">
-        <div class="flex items-center gap-2 min-w-0">
-          <h3 id="album-modal-title" class="font-bold text-gray-900 text-sm truncate"></h3>
-          <span id="album-modal-count" class="text-xs text-gray-400 shrink-0"></span>
-        </div>
-        <div class="flex items-center gap-3 shrink-0">
-          <a id="album-modal-drive" href="#" target="_blank" rel="noopener noreferrer"
-            class="text-primary-500 text-sm font-medium hover:underline hidden sm:inline">
-            Google Drive
-          </a>
-          <button type="button" id="album-modal-close"
-            class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            {locale === 'ko' ? '닫기' : 'Close'}
-          </button>
-        </div>
-      </div>
-
-      <!-- Photo grid -->
-      <div id="album-grid" class="max-w-6xl mx-auto px-3 py-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3"></div>
-    </div>
-
-    <!-- Lightbox -->
+    <!-- Lightbox (shared across all albums) -->
     <div id="album-lightbox" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/90">
       <button type="button" id="lb-close" class="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,108 +94,107 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
   </>
 )}
 
-<script define:vars={{ albumsData: sorted.map(a => ({ title: a.title, albumId: a.albumId, photos: a.photos || [] })) }}>
-  const modal = document.getElementById('album-modal');
-  const titleEl = document.getElementById('album-modal-title');
-  const countEl = document.getElementById('album-modal-count');
-  const driveLink = document.getElementById('album-modal-drive');
-  const closeBtn = document.getElementById('album-modal-close');
-  const grid = document.getElementById('album-grid');
+<script define:vars={{ basePath }}>
+  var photoCache = {};
+  var lbPhotos = [];
+  var lbIdx = 0;
 
-  const lightbox = document.getElementById('album-lightbox');
-  const lbImg = document.getElementById('lb-img');
-  const lbCounter = document.getElementById('lb-counter');
-  const lbClose = document.getElementById('lb-close');
-  const lbPrev = document.getElementById('lb-prev');
-  const lbNext = document.getElementById('lb-next');
+  var lightbox = document.getElementById('album-lightbox');
+  var lbImg = document.getElementById('lb-img');
+  var lbCounter = document.getElementById('lb-counter');
 
-  let currentPhotos = [];
-  let currentIdx = 0;
+  function imgUrl(id, w) { return 'https://lh3.googleusercontent.com/d/' + id + '=w' + w; }
 
-  function imgUrl(fileId, w) {
-    return 'https://lh3.googleusercontent.com/d/' + fileId + '=w' + w;
-  }
-
-  function openAlbum(albumIdx) {
-    const album = albumsData[albumIdx];
-    if (!album || !modal || !grid) return;
-
-    titleEl.textContent = album.title;
-    countEl.textContent = album.photos.length > 0 ? '(' + album.photos.length + ')' : '';
-    driveLink.href = 'https://drive.google.com/drive/folders/' + album.albumId;
-
-    grid.innerHTML = '';
-    currentPhotos = album.photos;
-
-    if (currentPhotos.length === 0) {
-      grid.innerHTML = '<p class="col-span-full text-center text-gray-400 py-12">사진이 아직 없습니다.</p>';
-    } else {
-      currentPhotos.forEach(function(photo, idx) {
-        var div = document.createElement('div');
-        div.className = 'aspect-square overflow-hidden rounded-lg bg-gray-200 cursor-pointer group';
-        var img = document.createElement('img');
-        img.src = imgUrl(photo.id, 400);
-        img.alt = photo.name;
-        img.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300';
-        img.loading = 'lazy';
-        div.appendChild(img);
-        div.addEventListener('click', function() { openLightbox(idx); });
-        grid.appendChild(div);
-      });
-    }
-
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function openLightbox(idx) {
-    if (!lightbox || !lbImg) return;
-    currentIdx = idx;
+  function openLightbox(photos, idx) {
+    lbPhotos = photos;
+    lbIdx = idx;
     updateLightbox();
     lightbox.classList.remove('hidden');
     lightbox.classList.add('flex');
+    document.body.style.overflow = 'hidden';
   }
 
   function updateLightbox() {
-    if (!currentPhotos[currentIdx]) return;
-    lbImg.src = imgUrl(currentPhotos[currentIdx].id, 1200);
-    lbImg.alt = currentPhotos[currentIdx].name;
-    lbCounter.textContent = (currentIdx + 1) + ' / ' + currentPhotos.length;
+    if (!lbPhotos[lbIdx]) return;
+    lbImg.src = imgUrl(lbPhotos[lbIdx].id, 1200);
+    lbImg.alt = lbPhotos[lbIdx].name;
+    lbCounter.textContent = (lbIdx + 1) + ' / ' + lbPhotos.length;
   }
 
   function closeLightbox() {
-    if (!lightbox) return;
     lightbox.classList.add('hidden');
     lightbox.classList.remove('flex');
     lbImg.src = '';
-  }
-
-  function closeAlbum() {
-    if (!modal) return;
-    closeLightbox();
-    modal.classList.add('hidden');
     document.body.style.overflow = '';
   }
 
-  document.querySelectorAll('.album-open-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var idx = parseInt(btn.dataset.albumIdx, 10);
-      openAlbum(idx);
+  function renderGrid(gridEl, photos) {
+    photos.forEach(function(photo, idx) {
+      var div = document.createElement('div');
+      div.className = 'aspect-square overflow-hidden rounded-lg bg-gray-200 cursor-pointer group';
+      var img = document.createElement('img');
+      img.src = imgUrl(photo.id, 400);
+      img.alt = photo.name;
+      img.className = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300';
+      img.loading = 'lazy';
+      div.appendChild(img);
+      div.addEventListener('click', function() { openLightbox(photos, idx); });
+      gridEl.appendChild(div);
+    });
+  }
+
+  document.querySelectorAll('.album-details').forEach(function(details) {
+    var loaded = false;
+
+    details.addEventListener('toggle', function() {
+      if (!details.open || loaded) return;
+      loaded = true;
+
+      var albumId = details.dataset.albumId;
+      var loadingEl = details.querySelector('.album-loading');
+      var gridEl = details.querySelector('.album-grid');
+
+      // Check cache
+      if (photoCache[albumId]) {
+        loadingEl.classList.add('hidden');
+        renderGrid(gridEl, photoCache[albumId]);
+        gridEl.classList.remove('hidden');
+        return;
+      }
+
+      // Fetch per-album JSON
+      fetch(basePath + '/data/albums/' + albumId + '.json')
+        .then(function(r) { return r.ok ? r.json() : []; })
+        .then(function(photos) {
+          photoCache[albumId] = photos;
+          loadingEl.classList.add('hidden');
+          if (photos.length === 0) {
+            gridEl.innerHTML = '<p class="col-span-full text-center text-gray-400 py-4">사진이 아직 없습니다.</p>';
+          } else {
+            renderGrid(gridEl, photos);
+          }
+          gridEl.classList.remove('hidden');
+        })
+        .catch(function() {
+          loadingEl.classList.add('hidden');
+          gridEl.innerHTML = '<p class="col-span-full text-center text-gray-400 py-4">사진을 불러올 수 없습니다.</p>';
+          gridEl.classList.remove('hidden');
+        });
     });
   });
 
-  closeBtn && closeBtn.addEventListener('click', closeAlbum);
-  lbClose && lbClose.addEventListener('click', closeLightbox);
-  lbPrev && lbPrev.addEventListener('click', function() { currentIdx = (currentIdx - 1 + currentPhotos.length) % currentPhotos.length; updateLightbox(); });
-  lbNext && lbNext.addEventListener('click', function() { currentIdx = (currentIdx + 1) % currentPhotos.length; updateLightbox(); });
-
+  // Lightbox controls
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lb-prev').addEventListener('click', function() {
+    lbIdx = (lbIdx - 1 + lbPhotos.length) % lbPhotos.length; updateLightbox();
+  });
+  document.getElementById('lb-next').addEventListener('click', function() {
+    lbIdx = (lbIdx + 1) % lbPhotos.length; updateLightbox();
+  });
   document.addEventListener('keydown', function(e) {
-    if (lightbox && !lightbox.classList.contains('hidden')) {
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowLeft') { currentIdx = (currentIdx - 1 + currentPhotos.length) % currentPhotos.length; updateLightbox(); }
-      if (e.key === 'ArrowRight') { currentIdx = (currentIdx + 1) % currentPhotos.length; updateLightbox(); }
-    } else if (modal && !modal.classList.contains('hidden')) {
-      if (e.key === 'Escape') closeAlbum();
-    }
+    if (!lightbox || lightbox.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') { lbIdx = (lbIdx - 1 + lbPhotos.length) % lbPhotos.length; updateLightbox(); }
+    if (e.key === 'ArrowRight') { lbIdx = (lbIdx + 1) % lbPhotos.length; updateLightbox(); }
   });
 </script>

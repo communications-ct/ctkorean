@@ -95,12 +95,15 @@ async function processAlbums(albums, thumbsDir) {
       }
     }
 
+    const photos = item.photos || [];
     processed.push({
       date: item.date,
       title: item.title,
       albumId: folderId || null,
       thumbUrl: localThumb || null,
-      photos: item.photos || [],
+      photoCount: photos.length,
+      // photos stored in separate per-album JSON for scalability
+      _photos: photos,
       // NOTE: albumUrl (full Drive URL) is intentionally NOT included
     });
   }
@@ -213,11 +216,27 @@ async function main() {
   console.log('Processing announcements (downloading images)...');
   const announcements = await processAnnouncements(raw.ann || [], annImagesDir);
 
+  // Write per-album photo JSON files
+  const albumsDataDir = path.join(publicDir, 'albums');
+  if (!fs.existsSync(albumsDataDir)) fs.mkdirSync(albumsDataDir, { recursive: true });
+
+  let totalPhotos = 0;
+  for (const album of albums) {
+    if (album.albumId && album._photos && album._photos.length > 0) {
+      const albumJson = JSON.stringify(album._photos, null, 2);
+      fs.writeFileSync(path.join(albumsDataDir, `${album.albumId}.json`), albumJson);
+      totalPhotos += album._photos.length;
+    }
+  }
+
+  // Strip _photos from albums.json (metadata only)
+  const albumsMeta = albums.map(({ _photos, ...rest }) => rest);
+
   // Write sanitized JSON
   const files = [
     ['announcements.json', announcements],
     ['bulletins.json', bulletins],
-    ['albums.json', albums],
+    ['albums.json', albumsMeta],
   ];
 
   for (const [filename, data] of files) {
@@ -230,7 +249,7 @@ async function main() {
   console.log(`Published data:
   - ${announcements.length} announcements (${annImageCount} images downloaded)
   - ${bulletins.length} bulletins (PDFs downloaded)
-  - ${albums.length} albums (thumbnails downloaded)
+  - ${albums.length} albums (thumbnails downloaded, ${totalPhotos} photos indexed)
   - Drive URLs stripped from all served JSON`);
 }
 
