@@ -37,6 +37,7 @@ jobs:
         with:
           path: |
             public/images/thumbs
+            public/images/announcements
             public/data/pdfs
           key: gas-assets-${{ github.sha }}
           restore-keys: |
