@@ -1,5 +1,7 @@
 ---
 import { t, getLocalizedPath, getAlternateLocale } from '../i18n/utils';
+import fs from 'node:fs';
+import path from 'node:path';
 
 interface Props {
   locale: string;
@@ -8,6 +10,22 @@ interface Props {
 const { locale } = Astro.props;
 const altLocale = getAlternateLocale(locale as 'ko' | 'en');
 const homePath = getLocalizedPath('', locale as 'ko' | 'en');
+
+// Load urgent announcements (within 7 days)
+let urgentAnnouncements: { title: string; body: string; date: string }[] = [];
+try {
+  const annPath = path.resolve('public/data/announcements.json');
+  if (fs.existsSync(annPath)) {
+    const all = JSON.parse(fs.readFileSync(annPath, 'utf-8'));
+    const now = Date.now();
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    urgentAnnouncements = all.filter((a: any) => {
+      const isUrgent = a.urgent === 1 || a.urgent === '1' || a.urgent === 'y';
+      const age = now - new Date(a.date).getTime();
+      return isUrgent && age >= 0 && age <= SEVEN_DAYS;
+    });
+  }
+} catch (_e) { /* ignore */ }
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const pagePathRaw = Astro.url.pathname
@@ -106,6 +124,22 @@ const navItems = [
     </div>
   </nav>
 </header>
+
+{urgentAnnouncements.length > 0 && (
+  <div class="bg-red-600 text-white">
+    {urgentAnnouncements.map(ann => (
+      <div class="max-w-6xl mx-auto px-4 py-2 flex items-center gap-3 text-sm">
+        <span class="shrink-0 px-2 py-0.5 bg-white text-red-600 text-xs font-bold rounded">
+          {locale === 'ko' ? '긴급' : 'URGENT'}
+        </span>
+        <span class="font-medium truncate">{ann.title}</span>
+        {ann.body && (
+          <span class="hidden sm:inline text-red-100 truncate">— {ann.body.split('\n')[0]}</span>
+        )}
+      </div>
+    ))}
+  </div>
+)}
 
 <script>
   const btn = document.getElementById('mobile-menu-btn');
