@@ -23,7 +23,7 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
 ) : (
   <div class="space-y-3">
     {sorted.map(album => (
-      <details class="card group album-details">
+      <details class="card group">
         <summary class="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
           <img
             src={album.thumbUrl}
@@ -39,42 +39,30 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
           </svg>
         </summary>
-        <div class="border-t border-gray-100">
-          <div class="flex items-center justify-end gap-3 px-4 py-2 bg-gray-50">
+        <div class="border-t border-gray-100 p-4">
+          <div class="flex justify-center mb-4">
+            <img
+              src={album.thumbUrl}
+              alt={album.title}
+              class="max-w-full max-h-[50vh] object-contain rounded-lg"
+              loading="lazy"
+            />
+          </div>
+          <div class="text-center">
             <a
               href={`https://drive.google.com/drive/folders/${album.albumId}`}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-primary-500 text-sm font-medium hover:underline"
+              class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-lg hover:bg-primary-600 transition-colors"
             >
-              {locale === 'ko' ? '새 창에서 열기' : 'Open in new tab'} &rarr;
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              {locale === 'ko' ? '전체 사진 보기 (Google Drive)' : 'View all photos (Google Drive)'}
             </a>
           </div>
-          <iframe
-            class="w-full bg-white album-iframe"
-            style="height: 70vh;"
-            data-src={`https://drive.google.com/embeddedfolderview?id=${album.albumId}#grid`}
-            src=""
-            title={album.title}
-          ></iframe>
         </div>
       </details>
     ))}
   </div>
 )}
-
-<script>
-  document.querySelectorAll('.album-details').forEach(details => {
-    details.addEventListener('toggle', () => {
-      const iframe = details.querySelector('.album-iframe') as HTMLIFrameElement;
-      if (!iframe) return;
-      if ((details as HTMLDetailsElement).open) {
-        if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
-          iframe.src = iframe.dataset.src || '';
-        }
-      } else {
-        iframe.src = '';
-      }
-    });
-  });
-</script>

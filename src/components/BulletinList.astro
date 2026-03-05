@@ -57,8 +57,8 @@ const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
             <iframe
               class="w-full bg-white bulletin-iframe"
               style="height: 70vh;"
-              data-src={viewerUrl}
-              src=""
+              data-viewer={viewerUrl}
+              src="about:blank"
               title={bul.title}
             ></iframe>
           </div>
@@ -74,11 +74,12 @@ const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
       const iframe = details.querySelector('.bulletin-iframe') as HTMLIFrameElement;
       if (!iframe) return;
       if ((details as HTMLDetailsElement).open) {
-        if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
-          iframe.src = iframe.dataset.src || '';
+        const viewer = iframe.dataset.viewer;
+        if (viewer && iframe.src !== viewer) {
+          iframe.src = viewer;
         }
       } else {
-        iframe.src = '';
+        iframe.src = 'about:blank';
       }
     });
   });
