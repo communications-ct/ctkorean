@@ -23,95 +23,63 @@ const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
 {sorted.length === 0 ? (
   <p class="text-center text-gray-400 py-8 col-span-full">{t(locale, 'news.noBulletins')}</p>
 ) : (
-  <>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {sorted.map(bul => {
-        const fullUrl = `${site}${bul.fileUrl}`;
-        const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fullUrl)}&embedded=true`;
-        return (
-          <div class="card-accent p-5 flex flex-col">
-            <div class="flex items-center gap-3 mb-3">
-              <svg class="w-8 h-8 text-red-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+  <div class="space-y-3">
+    {sorted.map(bul => {
+      const fullUrl = `${site}${bul.fileUrl}`;
+      const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fullUrl)}&embedded=true`;
+      return (
+        <details class="card group bulletin-details">
+          <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-3 min-w-0">
+              <svg class="w-6 h-6 text-red-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
               </svg>
-              <div class="min-w-0">
-                <h3 class="font-bold text-gray-900 text-sm truncate">{bul.title}</h3>
-                <p class="text-gray-400 text-xs">{formatDate(bul.date, locale)}</p>
-              </div>
+              <span class="font-medium text-gray-900 truncate">{bul.title}</span>
             </div>
-            <button
-              type="button"
-              class="btn-primary text-center text-sm mt-auto bulletin-open-btn"
-              data-viewer-url={viewerUrl}
-              data-title={bul.title}
-              data-download-url={bul.fileUrl}
-            >
-              {t(locale, 'news.viewPdf')}
-            </button>
-          </div>
-        );
-      })}
-    </div>
-
-    <!-- PDF Viewer Modal -->
-    <div id="bulletin-modal" class="fixed inset-0 z-[100] hidden">
-      <div class="absolute inset-0 bg-black/70" id="bulletin-modal-backdrop"></div>
-      <div class="relative z-10 flex flex-col h-full">
-        <div class="flex items-center justify-between px-4 py-3 bg-white shadow">
-          <h3 id="bulletin-modal-title" class="font-bold text-gray-900 text-sm truncate mr-4"></h3>
-          <div class="flex items-center gap-3 shrink-0">
-            <a id="bulletin-modal-download" href="#" target="_blank" rel="noopener noreferrer" class="text-primary-500 text-sm font-medium hover:underline">
-              {locale === 'ko' ? '새 창' : 'New tab'}
-            </a>
-            <button type="button" id="bulletin-modal-close" class="p-1 text-gray-500 hover:text-gray-900">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            <div class="flex items-center gap-2 shrink-0 ml-4">
+              <span class="text-sm text-gray-400">{formatDate(bul.date, locale)}</span>
+              <svg class="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
               </svg>
-            </button>
+            </div>
+          </summary>
+          <div class="border-t border-gray-100">
+            <div class="flex items-center justify-end gap-3 px-4 py-2 bg-gray-50">
+              <a
+                href={bul.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary-500 text-sm font-medium hover:underline"
+              >
+                {locale === 'ko' ? '새 창에서 열기' : 'Open in new tab'} &rarr;
+              </a>
+            </div>
+            <iframe
+              class="w-full bg-white bulletin-iframe"
+              style="height: 70vh;"
+              data-src={viewerUrl}
+              src=""
+              title={bul.title}
+            ></iframe>
           </div>
-        </div>
-        <iframe id="bulletin-modal-iframe" class="flex-1 bg-white" src="" title="PDF Viewer"></iframe>
-      </div>
-    </div>
-  </>
+        </details>
+      );
+    })}
+  </div>
 )}
 
 <script>
-  const modal = document.getElementById('bulletin-modal');
-  const iframe = document.getElementById('bulletin-modal-iframe') as HTMLIFrameElement;
-  const titleEl = document.getElementById('bulletin-modal-title');
-  const downloadEl = document.getElementById('bulletin-modal-download') as HTMLAnchorElement;
-  const closeBtn = document.getElementById('bulletin-modal-close');
-  const backdrop = document.getElementById('bulletin-modal-backdrop');
-
-  function openModal(viewerUrl: string, title: string, downloadUrl: string) {
-    if (!modal || !iframe || !titleEl || !downloadEl) return;
-    titleEl.textContent = title;
-    downloadEl.href = downloadUrl;
-    iframe.src = viewerUrl;
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal() {
-    if (!modal || !iframe) return;
-    modal.classList.add('hidden');
-    iframe.src = '';
-    document.body.style.overflow = '';
-  }
-
-  document.querySelectorAll('.bulletin-open-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const el = btn as HTMLElement;
-      openModal(
-        el.dataset.viewerUrl || '',
-        el.dataset.title || '',
-        el.dataset.downloadUrl || ''
-      );
+  document.querySelectorAll('.bulletin-details').forEach(details => {
+    details.addEventListener('toggle', () => {
+      const iframe = details.querySelector('.bulletin-iframe') as HTMLIFrameElement;
+      if (!iframe) return;
+      if ((details as HTMLDetailsElement).open) {
+        if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+          iframe.src = iframe.dataset.src || '';
+        }
+      } else {
+        iframe.src = '';
+      }
     });
   });
-
-  closeBtn?.addEventListener('click', closeModal);
-  backdrop?.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 </script>
