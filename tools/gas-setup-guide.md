@@ -29,13 +29,21 @@ Google Apps Script(GAS) 기반 관리자 패널 설정 방법입니다.
 
 1. 왼쪽 메뉴에서 **⚙️ 프로젝트 설정** 클릭
 2. 아래로 스크롤하여 **스크립트 속성** 섹션 찾기
-3. **스크립트 속성 추가** 클릭하여 다음 3개 추가:
+3. **스크립트 속성 추가** 클릭하여 다음 4개 추가:
 
 | 속성 | 값 | 설명 |
 |------|-----|------|
+| `SPREADSHEET_ID` | (스프레드시트 ID) | 공지사항 스프레드시트 URL의 `/d/여기/edit` 부분 |
 | `ADMIN_PASSWORD` | (원하는 비밀번호) | 관리자 로그인 비밀번호 |
 | `GH_TOKEN` | `ghp_xxxxx...` | GitHub Personal Access Token |
 | `GH_REPO` | `communications-ct/ctkorean` | GitHub 저장소 |
+
+### 스프레드시트 ID 찾기
+
+스프레드시트 URL에서 `/d/` 와 `/edit` 사이의 긴 문자열이 ID입니다:
+```
+https://docs.google.com/spreadsheets/d/여기가_스프레드시트_ID/edit
+```
 
 ### GitHub Token 만들기
 

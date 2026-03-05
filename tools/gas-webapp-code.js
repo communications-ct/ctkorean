@@ -13,6 +13,7 @@
  *   - GitHub 연동: repository_dispatch (데이터 변경 시 자동 빌드)
  *
  * Script Properties 필수 설정:
+ *   - SPREADSHEET_ID: 공지사항 스프레드시트 ID (URL에서 /d/XXXXX/edit 부분)
  *   - ADMIN_PASSWORD: 관리자 패널 비밀번호
  *   - GH_TOKEN: GitHub Personal Access Token (repo scope)
  *   - GH_REPO: communications-ct/ctkorean
@@ -35,6 +36,22 @@ var DRIVE_FOLDERS = {
 
 var SHEET_PREFIX = '공지사항';
 var MAX_ROWS_PER_SHEET = 10000;
+
+// =============================================================================
+// Spreadsheet Access (standalone script 지원)
+// =============================================================================
+
+/**
+ * 독립 스크립트에서도 동작하도록 openById() 사용.
+ * Script Properties에 SPREADSHEET_ID 필수.
+ */
+function getSpreadsheet_() {
+  var id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  if (!id) {
+    throw new Error('SPREADSHEET_ID가 Script Properties에 설정되지 않았습니다.');
+  }
+  return SpreadsheetApp.openById(id);
+}
 
 // =============================================================================
 // Web App Entry Points
@@ -149,7 +166,7 @@ function verifyPassword_(password) {
  * 공지사항 — 모든 공지사항 시트에서 읽기
  */
 function getAnnouncements_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sheets = ss.getSheets();
   var all = [];
 
@@ -297,7 +314,7 @@ function readAnnouncementSheet_(sheet) {
  * Creates a new sheet if needed.
  */
 function getActiveAnnouncementSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sheets = ss.getSheets();
 
   // Find all announcement sheets, sorted by suffix number
@@ -342,7 +359,7 @@ function getActiveAnnouncementSheet_() {
  * Returns { sheet, rowIndex } or null.
  */
 function findAnnouncementRow_(date, title) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sheets = ss.getSheets();
 
   for (var i = 0; i < sheets.length; i++) {
@@ -514,7 +531,7 @@ function checkAndDispatch_() {
  * Compute MD5 hash of all announcement data for change detection.
  */
 function computeDataHash_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
   var sheets = ss.getSheets();
   var allData = [];
 
