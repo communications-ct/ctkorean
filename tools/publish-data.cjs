@@ -13,9 +13,9 @@ const fs = require('fs');
 const path = require('path');
 
 const CONFIG = {
-  ANNOUNCEMENTS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=ann',
-  BULLETINS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=bulletin',
-  ALBUMS_URL: 'https://script.google.com/macros/s/AKfycbzivlp1VLwa6aIT9AksAkydRwOSp1kuThbBxl8UjzHt0ShMM56K91lpQIyRCDaW2kcsng/exec?type=albums',
+  ANNOUNCEMENTS_URL: 'https://script.google.com/macros/s/AKfycbyKD2rAGQd_jeLqhLozJUCyWlKHPH-qd1gJhexu2zUXAkZSBQYvRUZM5mbQJchTMMk-9g/exec?type=ann',
+  BULLETINS_URL: 'https://script.google.com/macros/s/AKfycbyKD2rAGQd_jeLqhLozJUCyWlKHPH-qd1gJhexu2zUXAkZSBQYvRUZM5mbQJchTMMk-9g/exec?type=bulletin',
+  ALBUMS_URL: 'https://script.google.com/macros/s/AKfycbyKD2rAGQd_jeLqhLozJUCyWlKHPH-qd1gJhexu2zUXAkZSBQYvRUZM5mbQJchTMMk-9g/exec?type=albums',
   BASE_PATH: '/ctkorean',
 };
 

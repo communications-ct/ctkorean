@@ -31,11 +31,23 @@ const navItems = [
   <div class="max-w-6xl mx-auto px-4">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
-      <a href={homePath} class="flex items-center gap-2 text-primary-600 font-bold shrink-0">
-        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M10.5 2h3v5h5v3h-5v12h-3V10h-5V7h5z"/>
+      <a href={homePath} class="flex items-center gap-2 shrink-0" aria-label={t(locale, 'site.title')}>
+        <!-- Sacred Heart Logo -->
+        <svg class="w-8 h-8 text-red-700 shrink-0" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+          <path d="M50 90C50 90 10 60 10 35C10 20 22 10 35 10C42 10 48 14 50 18C52 14 58 10 65 10C78 10 90 20 90 35C90 60 50 90 50 90Z" fill="currentColor"/>
+          <path d="M46 8h8v20h20v8H54v35h-8V36H26v-8h20z" fill="white"/>
         </svg>
-        <span class="hidden md:inline text-sm lg:text-base">{t(locale, 'site.title')}</span>
+        {locale === 'ko' ? (
+          <div class="hidden md:flex flex-col leading-tight">
+            <span class="text-sm lg:text-base font-bold text-gray-900">예수성심 천주교 커네티컷 성당</span>
+            <span class="text-[10px] lg:text-xs text-gray-500">Sacred Heart Korean Catholic Parish</span>
+          </div>
+        ) : (
+          <div class="hidden md:flex flex-col leading-tight">
+            <span class="text-sm lg:text-base font-bold text-gray-900">Sacred Heart Korean Catholic Parish</span>
+            <span class="text-[10px] lg:text-xs text-gray-500">예수성심 천주교 커네티컷 성당</span>
+          </div>
+        )}
       </a>
 
       <!-- Desktop Nav -->
