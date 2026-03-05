@@ -53,8 +53,8 @@ function genLabel(n: number): string {
         <!-- Current Pastor -->
         <div class="mb-12">
           <PriestCard
-            name={currentPriest.name}
-            baptismalName={currentPriest.baptismalName}
+            name={`Fr. ${currentPriest.nameEn}`}
+            baptismalName={currentPriest.baptismalNameEn}
             generationLabel={genLabel(currentPriest.generation)}
             tenure={`${currentPriest.tenureStart} ~ ${t(locale, 'priests.present')}`}
             image={currentPriest.image}
@@ -70,8 +70,8 @@ function genLabel(n: number): string {
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {formerPriests.map(priest => (
             <PriestCard
-              name={priest.name}
-              baptismalName={priest.baptismalName}
+              name={`Fr. ${priest.nameEn}`}
+              baptismalName={priest.baptismalNameEn}
               generationLabel={genLabel(priest.generation)}
               tenure={`${priest.tenureStart} ~ ${priest.tenureEnd}`}
               image={priest.image}
