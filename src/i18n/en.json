@@ -1,5 +1,5 @@
 {
-  "site.title": "Sacred Heart Korean Catholic Church of Connecticut",
+  "site.title": "Sacred Heart of Jesus Korean Catholic Parish of Connecticut",
   "site.description": "Korean Catholic Community in Connecticut",
 
   "nav.home": "Home",
@@ -11,7 +11,7 @@
   "nav.language": "한국어",
   "nav.menu": "Menu",
 
-  "hero.title": "Sacred Heart Korean Catholic Church",
+  "hero.title": "Sacred Heart of Jesus Korean Catholic Parish",
   "hero.subtitle": "Welcome to the Korean Catholic Community of Connecticut",
   "hero.cta.news": "Community News",
   "hero.cta.mass": "Mass Schedule",
@@ -73,7 +73,7 @@
   "directions.viewMap": "View on Google Maps",
   "directions.mapTitle": "Google Maps",
 
-  "footer.copyright": "Sacred Heart Korean Catholic Church of Connecticut",
+  "footer.copyright": "Sacred Heart of Jesus Korean Catholic Parish of Connecticut",
   "footer.rights": "All rights reserved.",
   "footer.address.value": "56 Hartford Ave, Wethersfield, CT 06109",
   "footer.phone.value": "860-529-1456",
