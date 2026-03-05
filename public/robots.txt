@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ctkoreancatholic.org/sitemap-index.xml
+Sitemap: https://communications-ct.github.io/ctkorean/sitemap-index.xml
