@@ -26,7 +26,7 @@ const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
   <div class="space-y-3">
     {sorted.map(bul => {
       const fullUrl = `${site}${bul.fileUrl}`;
-      const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fullUrl)}&embedded=true`;
+      const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fullUrl)}&embedded=true`;
       return (
         <details class="card group bulletin-details">
           <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
@@ -54,10 +54,12 @@ const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
                 {locale === 'ko' ? '새 창에서 열기' : 'Open in new tab'} &rarr;
               </a>
             </div>
+            {/* Desktop: 브라우저 내장 PDF 뷰어 (페이지 넘김/줌 지원) */}
             <iframe
-              class="w-full bg-white bulletin-iframe"
-              style="height: 70vh;"
-              data-viewer={viewerUrl}
+              class="w-full bg-white bulletin-iframe hidden"
+              style="height: 80vh;"
+              data-pdf={bul.fileUrl}
+              data-gview={gviewUrl}
               src="about:blank"
               title={bul.title}
             ></iframe>
@@ -69,14 +71,19 @@ const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
 )}
 
 <script>
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   document.querySelectorAll('.bulletin-details').forEach(details => {
     details.addEventListener('toggle', () => {
       const iframe = details.querySelector('.bulletin-iframe') as HTMLIFrameElement;
       if (!iframe) return;
+      iframe.classList.remove('hidden');
       if ((details as HTMLDetailsElement).open) {
-        const viewer = iframe.dataset.viewer;
-        if (viewer && iframe.src !== viewer) {
-          iframe.src = viewer;
+        // Desktop: 로컬 PDF 직접 (내장 뷰어로 전체 페이지 스크롤/줌)
+        // Mobile: Google Docs Viewer (모바일 PDF 렌더링 지원)
+        const url = isMobile ? (iframe.dataset.gview || '') : (iframe.dataset.pdf || '');
+        if (url && !iframe.src.endsWith(url)) {
+          iframe.src = url;
         }
       } else {
         iframe.src = 'about:blank';
