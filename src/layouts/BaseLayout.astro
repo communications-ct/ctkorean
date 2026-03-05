@@ -1,0 +1,64 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { t, getLocalizedPath, getAbsoluteLocalizedPath } from '../i18n/utils';
+
+interface Props {
+  title?: string;
+  description?: string;
+  locale?: string;
+}
+
+const { locale = 'ko' } = Astro.props;
+const title = Astro.props.title || t(locale, 'site.title');
+const description = Astro.props.description || t(locale, 'site.description');
+const currentPath = Astro.url.pathname
+  .replace(new RegExp(`^${import.meta.env.BASE_URL.replace(/\/$/, '')}`), '')
+  .replace(/^\/(ko|en)\/?/, '');
+
+const ogLocale = locale === 'en' ? 'en_US' : 'ko_KR';
+const canonicalUrl = getAbsoluteLocalizedPath(currentPath, locale as 'ko' | 'en');
+const site = (import.meta.env.SITE || '').replace(/\/$/, '');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const ogImage = `${site}${base}/00.jpg`;
+---
+
+<!DOCTYPE html>
+<html lang={locale}>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content={ogLocale} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImage} />
+  <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="alternate" hreflang="ko" href={getAbsoluteLocalizedPath(currentPath, 'ko')} />
+  <link rel="alternate" hreflang="en" href={getAbsoluteLocalizedPath(currentPath, 'en')} />
+  <link rel="alternate" hreflang="x-default" href={getAbsoluteLocalizedPath(currentPath, 'ko')} />
+  <meta name="referrer" content="no-referrer" />
+</head>
+<body class="min-h-screen flex flex-col">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-primary-500 focus:text-white focus:rounded-lg">
+    {t(locale, 'a11y.skipToContent')}
+  </a>
+  <Header locale={locale} />
+  <slot />
+  <Footer locale={locale} />
+</body>
+</html>

@@ -1,0 +1,48 @@
+---
+import { t, formatDate } from '../i18n/utils';
+
+interface Bulletin {
+  date: string;
+  title: string;
+  type: string;
+  fileUrl: string;
+  previewUrl: string;
+}
+
+interface Props {
+  bulletins: Bulletin[];
+  locale: string;
+}
+
+const { bulletins, locale } = Astro.props;
+
+const sorted = [...bulletins].sort((a, b) => b.date.localeCompare(a.date));
+---
+
+{sorted.length === 0 ? (
+  <p class="text-center text-gray-400 py-8 col-span-full">{t(locale, 'news.noBulletins')}</p>
+) : (
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {sorted.map(bul => (
+      <div class="card-accent p-5 flex flex-col">
+        <div class="flex items-center gap-3 mb-3">
+          <svg class="w-8 h-8 text-red-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+          </svg>
+          <div class="min-w-0">
+            <h3 class="font-bold text-gray-900 text-sm truncate">{bul.title}</h3>
+            <p class="text-gray-400 text-xs">{formatDate(bul.date, locale)}</p>
+          </div>
+        </div>
+        <a
+          href={bul.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-primary text-center text-sm mt-auto"
+        >
+          {t(locale, 'news.viewPdf')}
+        </a>
+      </div>
+    ))}
+  </div>
+)}

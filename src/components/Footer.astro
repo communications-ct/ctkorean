@@ -1,0 +1,57 @@
+---
+import { t, getLocalizedPath } from '../i18n/utils';
+
+interface Props {
+  locale: string;
+}
+
+const { locale } = Astro.props;
+const homePath = getLocalizedPath('', locale as 'ko' | 'en');
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-auto bg-gray-900 text-gray-400">
+  <div class="max-w-6xl mx-auto px-4 py-12">
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- Church Info -->
+      <div>
+        <h3 class="text-white text-lg font-bold mb-4">{t(locale, 'site.title')}</h3>
+        <div class="space-y-2 text-sm">
+          <p>
+            <span class="text-gray-500">{t(locale, 'directions.address')}:</span>{' '}
+            {t(locale, 'footer.address.value')}
+          </p>
+          <p>
+            <span class="text-gray-500">{t(locale, 'directions.phone')}:</span>{' '}
+            <a href="tel:860-529-1456" class="hover:text-white transition-colors">
+              {t(locale, 'footer.phone.value')}
+            </a>
+          </p>
+          <p>
+            <span class="text-gray-500">{t(locale, 'footer.mobile')}:</span>{' '}
+            <a href="tel:860-519-4650" class="hover:text-white transition-colors">
+              {t(locale, 'footer.mobile.value')}
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h3 class="text-white text-lg font-bold mb-4">{t(locale, 'footer.quicklinks')}</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <a href={homePath} class="hover:text-white transition-colors">{t(locale, 'nav.home')}</a>
+          <a href={getLocalizedPath('news', locale as 'ko' | 'en')} class="hover:text-white transition-colors">{t(locale, 'nav.news')}</a>
+          <a href={`${homePath}#mass`} class="hover:text-white transition-colors">{t(locale, 'nav.mass')}</a>
+          <a href={`${homePath}#directions`} class="hover:text-white transition-colors">{t(locale, 'nav.directions')}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="border-t border-gray-800">
+    <div class="max-w-6xl mx-auto px-4 py-4 text-center text-sm">
+      <p>&copy; {year} {t(locale, 'footer.copyright')}. {t(locale, 'footer.rights')}</p>
+    </div>
+  </div>
+</footer>

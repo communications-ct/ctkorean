@@ -1,0 +1,48 @@
+---
+import fs from 'node:fs';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AnnouncementList from '../../components/AnnouncementList.astro';
+import BulletinList from '../../components/BulletinList.astro';
+import AlbumGallery from '../../components/AlbumGallery.astro';
+import { t } from '../../i18n/utils';
+
+const locale = 'ko';
+
+function readJson(filename: string): any[] {
+  try {
+    return JSON.parse(fs.readFileSync(`public/data/${filename}`, 'utf8'));
+  } catch {
+    return [];
+  }
+}
+
+const announcements = readJson('announcements.json');
+const bulletins = readJson('bulletins.json');
+const albums = readJson('albums.json');
+---
+
+<BaseLayout locale={locale} title={`${t(locale, 'news.title')} - ${t(locale, 'site.title')}`}>
+  <main id="main-content" class="flex-1">
+    <div class="max-w-6xl mx-auto px-4 py-12">
+      <h1 class="section-title">{t(locale, 'news.title')}</h1>
+
+      <section id="ann" class="mb-16">
+        <h2 class="text-2xl font-bold text-primary-700 mb-2">{t(locale, 'news.announcements')}</h2>
+        <p class="text-gray-500 text-sm mb-6">{t(locale, 'news.announcements.desc')}</p>
+        <AnnouncementList announcements={announcements} locale={locale} />
+      </section>
+
+      <section id="bul" class="mb-16">
+        <h2 class="text-2xl font-bold text-primary-700 mb-2">{t(locale, 'news.bulletins')}</h2>
+        <p class="text-gray-500 text-sm mb-6">{t(locale, 'news.bulletins.desc')}</p>
+        <BulletinList bulletins={bulletins} locale={locale} />
+      </section>
+
+      <section id="alb">
+        <h2 class="text-2xl font-bold text-primary-700 mb-2">{t(locale, 'news.albums')}</h2>
+        <p class="text-gray-500 text-sm mb-6">{t(locale, 'news.albums.desc')}</p>
+        <AlbumGallery albums={albums} locale={locale} />
+      </section>
+    </div>
+  </main>
+</BaseLayout>

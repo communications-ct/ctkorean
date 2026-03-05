@@ -1,0 +1,121 @@
+---
+import { t, getLocalizedPath, getAlternateLocale } from '../i18n/utils';
+
+interface Props {
+  locale: string;
+}
+
+const { locale } = Astro.props;
+const altLocale = getAlternateLocale(locale as 'ko' | 'en');
+const homePath = getLocalizedPath('', locale as 'ko' | 'en');
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+const pagePathRaw = Astro.url.pathname
+  .replace(new RegExp(`^${basePath}`), '')
+  .replace(/^\/(ko|en)\/?/, '');
+const altPath = getLocalizedPath(pagePathRaw, altLocale);
+
+const isNews = Astro.url.pathname.includes('/news');
+
+const navItems = [
+  { label: t(locale, 'nav.home'), href: homePath, active: !isNews },
+  { label: t(locale, 'nav.about'), href: `${homePath}#about` },
+  { label: t(locale, 'nav.priests'), href: `${homePath}#priests` },
+  { label: t(locale, 'nav.mass'), href: `${homePath}#mass` },
+  { label: t(locale, 'nav.news'), href: getLocalizedPath('news', locale as 'ko' | 'en'), active: isNews },
+  { label: t(locale, 'nav.directions'), href: `${homePath}#directions` },
+];
+---
+
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href={homePath} class="flex items-center gap-2 text-primary-600 font-bold shrink-0">
+        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M10.5 2h3v5h5v3h-5v12h-3V10h-5V7h5z"/>
+        </svg>
+        <span class="hidden md:inline text-sm lg:text-base">{t(locale, 'site.title')}</span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden lg:flex items-center gap-5">
+        {navItems.map(item => (
+          <a
+            href={item.href}
+            class:list={[
+              'text-sm font-medium transition-colors',
+              item.active ? 'text-primary-500' : 'text-gray-700 hover:text-primary-500',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))}
+        <a
+          href={altPath}
+          class="ml-1 px-3 py-1.5 text-sm border border-primary-500 text-primary-500 rounded-md hover:bg-primary-500 hover:text-white transition-colors"
+        >
+          {t(locale, 'nav.language')}
+        </a>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button
+        id="mobile-menu-btn"
+        class="lg:hidden p-2 text-gray-700 hover:text-primary-500 transition-colors"
+        aria-label={t(locale, 'nav.menu')}
+        aria-expanded="false"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M6 18L18 6"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  <nav id="mobile-menu" class="hidden lg:hidden border-t border-gray-100 bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col">
+      {navItems.map(item => (
+        <a
+          href={item.href}
+          class:list={[
+            'py-3 border-b border-gray-50 transition-colors',
+            item.active ? 'text-primary-500 font-medium' : 'text-gray-700 hover:text-primary-500',
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+      <a href={altPath} class="py-3 text-primary-500 font-medium">
+        {t(locale, 'nav.language')}
+      </a>
+    </div>
+  </nav>
+</header>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  const hamburger = document.getElementById('hamburger-icon');
+  const closeIcon = document.getElementById('close-icon');
+
+  btn?.addEventListener('click', () => {
+    const isOpen = !menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden');
+    hamburger?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
+    btn.setAttribute('aria-expanded', String(!isOpen));
+  });
+
+  // Close mobile menu when clicking a hash link
+  menu?.querySelectorAll('a[href*="#"]').forEach(link => {
+    link.addEventListener('click', () => {
+      menu.classList.add('hidden');
+      hamburger?.classList.remove('hidden');
+      closeIcon?.classList.add('hidden');
+      btn?.setAttribute('aria-expanded', 'false');
+    });
+  });
+</script>

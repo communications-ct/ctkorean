@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Astro build output
+dist/
+.astro/
+
+# Environment
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Generated binary assets (downloaded at build time by publish-data.cjs)
+public/images/thumbs/
+public/data/pdfs/

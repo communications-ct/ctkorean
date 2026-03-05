@@ -1,0 +1,86 @@
+---
+import { t, formatDate } from '../i18n/utils';
+
+interface Announcement {
+  date: string;
+  title: string;
+  body: string;
+  link: string;
+  urgent: number | string;
+}
+
+interface Props {
+  announcements: Announcement[];
+  locale: string;
+}
+
+const { announcements, locale } = Astro.props;
+
+function isUrgent(val: unknown): boolean {
+  return val === 1 || val === '1' || val === 'y' || val === 'yes' || val === 'true';
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatBody(body: string): string {
+  const escaped = escapeHtml(body).replace(/\n/g, '<br>');
+  return escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary-500 hover:underline break-all">$1</a>'
+  );
+}
+
+const sorted = [...announcements].sort((a, b) => {
+  const au = isUrgent(a.urgent) ? 1 : 0;
+  const bu = isUrgent(b.urgent) ? 1 : 0;
+  if (bu !== au) return bu - au;
+  return b.date.localeCompare(a.date);
+});
+---
+
+{sorted.length === 0 ? (
+  <p class="text-center text-gray-400 py-8">{t(locale, 'news.noAnnouncements')}</p>
+) : (
+  <div class="space-y-3">
+    {sorted.map(ann => (
+      <details class:list={['card group', isUrgent(ann.urgent) && 'border-l-4 border-red-500']}>
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            {isUrgent(ann.urgent) && (
+              <span class="shrink-0 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
+                {t(locale, 'news.urgent')}
+              </span>
+            )}
+            <span class="font-medium text-gray-900 truncate">{ann.title}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 ml-4">
+            <span class="text-sm text-gray-400">{formatDate(ann.date, locale)}</span>
+            <svg class="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </summary>
+        <div class="px-4 pb-4 border-t border-gray-100">
+          <div class="text-gray-600 text-sm leading-relaxed pt-3" set:html={formatBody(ann.body)} />
+          {ann.link && (
+            <a
+              href={ann.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-block mt-3 text-primary-500 text-sm font-medium hover:underline"
+            >
+              {t(locale, 'news.original')} &rarr;
+            </a>
+          )}
+        </div>
+      </details>
+    ))}
+  </div>
+)}

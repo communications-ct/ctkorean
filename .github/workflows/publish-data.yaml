@@ -18,13 +18,25 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Cache downloaded assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            public/images/thumbs
+            public/data/pdfs
+          key: gas-assets-${{ github.run_id }}
+          restore-keys: |
+            gas-assets-
+
       - name: Publish data
-        run: |
-          node tools/publish-data.js
+        run: node tools/publish-data.cjs
+
       - name: Commit and push to main (try)
         id: push
         continue-on-error: true
@@ -33,10 +45,11 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git checkout main
           git pull --rebase origin main
-          git add data/*.json
-          git diff --quiet && echo "No changes" && exit 0
+          git add data/*.json public/data/*.json
+          git diff --staged --quiet && echo "No changes" && exit 0
           git commit -m "chore(data): publish static JSON"
           git push origin HEAD:main
+
       - name: Create Pull Request
         if: steps.push.outcome == 'failure'
         uses: peter-evans/create-pull-request@v6
@@ -45,9 +58,10 @@ jobs:
           title: "chore(data): publish static JSON"
           body: |
             Automated weekly/static data publish.
-            - Updates data/*.json from GAS endpoints.
+            - Updates data/*.json and public/data/*.json from GAS endpoints.
             - Merging this PR makes the site serve fresh static JSON immediately.
           branch: chore/publish-data
           delete-branch: true
           add-paths: |
             data/*.json
+            public/data/*.json

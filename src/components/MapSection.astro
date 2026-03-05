@@ -1,0 +1,67 @@
+---
+import { t } from '../i18n/utils';
+
+interface Props {
+  locale: string;
+}
+
+const { locale } = Astro.props;
+const mapQuery = '56+Hartford+Ave,+Wethersfield,+CT+06109';
+---
+
+<section id="directions" class="py-20">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="section-title">{t(locale, 'directions.title')}</h2>
+    <div class="grid md:grid-cols-5 gap-8">
+      <!-- Contact Info -->
+      <div class="md:col-span-2 flex flex-col justify-center">
+        <div class="space-y-4">
+          <div>
+            <h3 class="font-bold text-gray-900 mb-1">{t(locale, 'directions.address')}</h3>
+            <p class="text-gray-600">{t(locale, 'footer.address.value')}</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-900 mb-1">{t(locale, 'directions.phone')}</h3>
+            <p class="text-gray-600">
+              <a href="tel:860-529-1456" class="hover:text-primary-500 transition-colors">
+                {t(locale, 'footer.phone.value')}
+              </a>
+            </p>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-900 mb-1">{t(locale, 'footer.mobile')}</h3>
+            <p class="text-gray-600">
+              <a href="tel:860-519-4650" class="hover:text-primary-500 transition-colors">
+                {t(locale, 'footer.mobile.value')}
+              </a>
+            </p>
+          </div>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-primary inline-block text-center text-sm mt-2"
+          >
+            {t(locale, 'directions.viewMap')}
+          </a>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="md:col-span-3">
+        <div class="rounded-lg overflow-hidden shadow-md">
+          <iframe
+            src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+            width="100%"
+            height="400"
+            style="border:0;"
+            allowfullscreen
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title={t(locale, 'directions.mapTitle')}
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

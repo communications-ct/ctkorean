@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
+import PriestCard from '../../components/PriestCard.astro';
+import MassSchedule from '../../components/MassSchedule.astro';
+import MapSection from '../../components/MapSection.astro';
+import { t } from '../../i18n/utils';
+import { priests } from '../../data/priests';
+
+const locale = 'ko';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const currentPriest = priests[0];
+const formerPriests = priests.slice(1);
+
+function genLabel(n: number): string {
+  return t(locale, 'priests.generation', { n });
+}
+---
+
+<BaseLayout locale={locale}>
+  <main id="main-content">
+    <Hero locale={locale} />
+
+    <!-- About -->
+    <section id="about" class="py-20">
+      <div class="max-w-6xl mx-auto px-4">
+        <h2 class="section-title">{t(locale, 'about.title')}</h2>
+        <div class="grid md:grid-cols-2 gap-10 items-center">
+          <div class="rounded-lg overflow-hidden shadow-md">
+            <img
+              src={`${base}/01.jpg`}
+              alt={t(locale, 'about.title')}
+              class="w-full h-72 md:h-80 object-cover"
+            />
+          </div>
+          <div>
+            <p class="text-lg text-gray-600 leading-relaxed mb-4">
+              {t(locale, 'about.description')}
+            </p>
+            <p class="text-lg text-gray-600 leading-relaxed">
+              {t(locale, 'about.description2')}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Priests -->
+    <section id="priests" class="py-20 bg-gray-50">
+      <div class="max-w-6xl mx-auto px-4">
+        <h2 class="section-title">{t(locale, 'priests.title')}</h2>
+
+        <!-- Current Pastor -->
+        <div class="mb-12">
+          <PriestCard
+            name={currentPriest.name}
+            baptismalName={currentPriest.baptismalName}
+            generationLabel={genLabel(currentPriest.generation)}
+            tenure={`${currentPriest.tenureStart} ~ ${t(locale, 'priests.present')}`}
+            image={currentPriest.image}
+            highlight={true}
+            currentLabel={t(locale, 'priests.current')}
+          />
+        </div>
+
+        <!-- Former Pastors -->
+        <h3 class="text-lg font-bold text-gray-700 text-center mb-8">
+          {t(locale, 'priests.former')}
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {formerPriests.map(priest => (
+            <PriestCard
+              name={priest.name}
+              baptismalName={priest.baptismalName}
+              generationLabel={genLabel(priest.generation)}
+              tenure={`${priest.tenureStart} ~ ${priest.tenureEnd}`}
+              image={priest.image}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Mass Schedule -->
+    <MassSchedule locale={locale} />
+
+    <!-- Directions & Map -->
+    <MapSection locale={locale} />
+  </main>
+</BaseLayout>

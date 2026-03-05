@@ -1,0 +1,28 @@
+{
+  "name": "ctkorean",
+  "version": "2.0.0",
+  "description": "Sacred Heart Korean Catholic Church of Connecticut",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "publish-data": "node tools/publish-data.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/communications-ct/ctkorean.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/communications-ct/ctkorean/issues"
+  },
+  "homepage": "https://github.com/communications-ct/ctkorean#readme",
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.0",
+    "@astrojs/tailwind": "^6.0.2",
+    "astro": "^5.18.0",
+    "tailwindcss": "^3.4.19"
+  }
+}

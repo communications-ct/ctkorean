@@ -1,0 +1,35 @@
+---
+import { t } from '../i18n/utils';
+
+interface Props {
+  locale: string;
+}
+
+const { locale } = Astro.props;
+
+const scheduleItems = [
+  { titleKey: 'mass.sunday', timeKey: 'mass.sunday.time' },
+  { titleKey: 'mass.wednesday', timeKey: 'mass.wednesday.time' },
+  { titleKey: 'mass.holyHour', timeKey: 'mass.holyHour.time' },
+  { titleKey: 'mass.confession', timeKey: 'mass.confession.time' },
+  { titleKey: 'mass.anointing', timeKey: 'mass.anointing.time' },
+  { titleKey: 'mass.baptism', timeKey: 'mass.baptism.time' },
+  { titleKey: 'mass.consultation', timeKey: 'mass.consultation.time' },
+  { titleKey: 'mass.blessing', timeKey: 'mass.blessing.time' },
+  { titleKey: 'mass.funeral', timeKey: 'mass.funeral.time' },
+];
+---
+
+<section id="mass" class="py-20 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-4">
+    <h2 class="section-title">{t(locale, 'mass.title')}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {scheduleItems.map(item => (
+        <div class="card-accent p-5">
+          <h3 class="font-bold text-gray-900 mb-1">{t(locale, item.titleKey)}</h3>
+          <p class="text-gray-600 text-sm">{t(locale, item.timeKey)}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

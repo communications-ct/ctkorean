@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { t, getLocalizedPath } from '../i18n/utils';
+
+const locale = 'ko';
+---
+
+<BaseLayout locale={locale} title={t(locale, '404.title')}>
+  <main id="main-content" class="flex-1 flex items-center justify-center py-20">
+    <div class="text-center px-4">
+      <h1 class="text-8xl font-bold text-primary-500 mb-4">404</h1>
+      <p class="text-xl text-gray-600 mb-8">
+        {t(locale, '404.description')}
+      </p>
+      <a href={getLocalizedPath('', locale as 'ko' | 'en')} class="btn-primary">
+        {t(locale, '404.backHome')}
+      </a>
+    </div>
+  </main>
+</BaseLayout>

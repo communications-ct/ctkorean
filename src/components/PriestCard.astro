@@ -1,0 +1,65 @@
+---
+interface Props {
+  name: string;
+  baptismalName?: string;
+  generationLabel: string;
+  tenure: string;
+  image?: string;
+  highlight?: boolean;
+  currentLabel?: string;
+}
+
+const { name, baptismalName, generationLabel, tenure, image, highlight, currentLabel } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+{highlight ? (
+  <div class="card p-8 max-w-sm mx-auto text-center">
+    <div class="w-32 h-32 mx-auto mb-4">
+      {image ? (
+        <img
+          src={`${base}/${image}`}
+          alt={name}
+          class="w-full h-full rounded-full object-cover border-4 border-primary-500"
+        />
+      ) : (
+        <div class="w-full h-full rounded-full bg-gray-200 flex items-center justify-center border-4 border-primary-500">
+          <svg class="w-16 h-16 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/>
+          </svg>
+        </div>
+      )}
+    </div>
+    {currentLabel && (
+      <span class="inline-block px-3 py-1 bg-primary-500 text-white text-xs font-bold rounded-full mb-3">
+        {currentLabel}
+      </span>
+    )}
+    <h3 class="text-xl font-bold text-gray-900">{name}</h3>
+    {baptismalName && <p class="text-primary-600 text-sm mt-1">{baptismalName}</p>}
+    <p class="text-gray-500 text-sm mt-1">{generationLabel}</p>
+    <p class="text-gray-400 text-xs mt-1">{tenure}</p>
+  </div>
+) : (
+  <div class="flex flex-col items-center text-center">
+    <div class="w-20 h-20 mb-3">
+      {image ? (
+        <img
+          src={`${base}/${image}`}
+          alt={name}
+          class="w-full h-full rounded-full object-cover border-2 border-gray-200"
+        />
+      ) : (
+        <div class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
+          <svg class="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/>
+          </svg>
+        </div>
+      )}
+    </div>
+    <h4 class="font-bold text-gray-800 text-sm">{name}</h4>
+    {baptismalName && <p class="text-primary-600 text-xs">{baptismalName}</p>}
+    <p class="text-gray-500 text-xs mt-0.5">{generationLabel}</p>
+    <p class="text-gray-400 text-xs">{tenure}</p>
+  </div>
+)}
