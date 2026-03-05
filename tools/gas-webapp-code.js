@@ -68,7 +68,7 @@ function doGet(e) {
     return HtmlService
       .createHtmlOutputFromFile('gas-admin-panel')
       .setTitle('성당 관리자 패널')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DENY);
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
   // Public API (기존 호환)
