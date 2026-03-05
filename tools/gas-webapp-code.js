@@ -528,18 +528,50 @@ function checkAndDispatch_() {
 }
 
 /**
- * Compute MD5 hash of all announcement data for change detection.
+ * Compute MD5 hash of all data sources for change detection.
+ * Includes: spreadsheet (announcements) + Drive folders (albums, bulletins).
  */
 function computeDataHash_() {
-  var ss = getSpreadsheet_();
-  var sheets = ss.getSheets();
   var allData = [];
 
+  // 1. Spreadsheet data (공지사항)
+  var ss = getSpreadsheet_();
+  var sheets = ss.getSheets();
   for (var i = 0; i < sheets.length; i++) {
     var name = sheets[i].getName();
     if (name.indexOf(SHEET_PREFIX) === 0) {
       allData.push(sheets[i].getDataRange().getValues());
     }
+  }
+
+  // 2. Albums folder — subfolder list (ID + name + last updated)
+  try {
+    var albumsFolder = DriveApp.getFolderById(DRIVE_FOLDERS.ALBUMS);
+    var albumSubs = albumsFolder.getFolders();
+    var albumEntries = [];
+    while (albumSubs.hasNext()) {
+      var sub = albumSubs.next();
+      albumEntries.push(sub.getId() + '|' + sub.getName() + '|' + sub.getLastUpdated().getTime());
+    }
+    albumEntries.sort();
+    allData.push(albumEntries);
+  } catch (e) {
+    Logger.log('Album folder scan error: ' + e.message);
+  }
+
+  // 3. Bulletins folder — file list (ID + name + last updated)
+  try {
+    var bulletinsFolder = DriveApp.getFolderById(DRIVE_FOLDERS.BULLETINS);
+    var bulFiles = bulletinsFolder.getFiles();
+    var bulEntries = [];
+    while (bulFiles.hasNext()) {
+      var f = bulFiles.next();
+      bulEntries.push(f.getId() + '|' + f.getName() + '|' + f.getLastUpdated().getTime());
+    }
+    bulEntries.sort();
+    allData.push(bulEntries);
+  } catch (e) {
+    Logger.log('Bulletin folder scan error: ' + e.message);
   }
 
   var str = JSON.stringify(allData);
