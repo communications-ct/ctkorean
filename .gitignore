@@ -21,3 +21,6 @@ Thumbs.db
 # Generated binary assets (downloaded at build time by publish-data.cjs)
 public/images/thumbs/
 public/data/pdfs/
+
+# Documents (local only)
+documents/
