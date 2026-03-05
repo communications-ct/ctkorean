@@ -21,10 +21,16 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
 {sorted.length === 0 ? (
   <p class="text-center text-gray-400 py-8 col-span-full">{t(locale, 'news.noAlbums')}</p>
 ) : (
-  <div class="space-y-3">
-    {sorted.map(album => (
-      <details class="card group">
-        <summary class="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-gray-50 transition-colors">
+  <>
+    <div class="space-y-3">
+      {sorted.map(album => (
+        <button
+          type="button"
+          class="card w-full flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50 transition-colors text-left album-open-btn"
+          data-album-id={album.albumId}
+          data-title={album.title}
+          data-thumb={album.thumbUrl}
+        >
           <img
             src={album.thumbUrl}
             alt={album.title}
@@ -35,34 +41,81 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
             <span class="font-medium text-gray-900 truncate block">{album.title}</span>
             <span class="text-sm text-gray-400">{formatDate(album.date, locale)}</span>
           </div>
-          <svg class="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
-        </summary>
-        <div class="border-t border-gray-100 p-4">
-          <div class="flex justify-center mb-4">
-            <img
-              src={album.thumbUrl}
-              alt={album.title}
-              class="max-w-full max-h-[50vh] object-contain rounded-lg"
-              loading="lazy"
-            />
-          </div>
-          <div class="text-center">
-            <a
-              href={`https://drive.google.com/drive/folders/${album.albumId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-lg hover:bg-primary-600 transition-colors"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              {locale === 'ko' ? '전체 사진 보기 (Google Drive)' : 'View all photos (Google Drive)'}
+        </button>
+      ))}
+    </div>
+
+    <!-- Album Modal -->
+    <div id="album-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
+      <div class="absolute inset-0 bg-black/70" id="album-modal-backdrop"></div>
+      <div class="relative z-10 min-h-full bg-white">
+        <!-- Sticky header with close button -->
+        <div class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-white shadow">
+          <h3 id="album-modal-title" class="font-bold text-gray-900 text-sm truncate mr-4"></h3>
+          <div class="flex items-center gap-3 shrink-0">
+            <a id="album-modal-drive" href="#" target="_blank" rel="noopener noreferrer"
+              class="text-primary-500 text-sm font-medium hover:underline">
+              {locale === 'ko' ? 'Google Drive' : 'Google Drive'}
             </a>
+            <button type="button" id="album-modal-close"
+              class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+              {locale === 'ko' ? '닫기' : 'Close'}
+            </button>
           </div>
         </div>
-      </details>
-    ))}
-  </div>
+        <!-- Content: Drive embed iframe -->
+        <iframe
+          id="album-modal-iframe"
+          class="w-full bg-white"
+          style="height: calc(100vh - 52px);"
+          src="about:blank"
+          title="Album Viewer"
+        ></iframe>
+      </div>
+    </div>
+  </>
 )}
+
+<script>
+  const modal = document.getElementById('album-modal');
+  const iframe = document.getElementById('album-modal-iframe') as HTMLIFrameElement;
+  const titleEl = document.getElementById('album-modal-title');
+  const driveLink = document.getElementById('album-modal-drive') as HTMLAnchorElement;
+  const closeBtn = document.getElementById('album-modal-close');
+  const backdrop = document.getElementById('album-modal-backdrop');
+
+  function openAlbum(albumId: string, title: string) {
+    if (!modal || !iframe || !titleEl || !driveLink) return;
+    const driveUrl = `https://drive.google.com/drive/folders/${albumId}`;
+    const embedUrl = `https://drive.google.com/embeddedfolderview?id=${albumId}#grid`;
+    titleEl.textContent = title;
+    driveLink.href = driveUrl;
+    iframe.src = embedUrl;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAlbum() {
+    if (!modal || !iframe) return;
+    modal.classList.add('hidden');
+    iframe.src = 'about:blank';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.album-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = btn as HTMLElement;
+      openAlbum(el.dataset.albumId || '', el.dataset.title || '');
+    });
+  });
+
+  closeBtn?.addEventListener('click', closeAlbum);
+  backdrop?.addEventListener('click', closeAlbum);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAlbum(); });
+</script>
