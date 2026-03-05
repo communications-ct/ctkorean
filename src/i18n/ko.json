@@ -4,7 +4,7 @@
 
   "nav.home": "홈",
   "nav.about": "성당 소개",
-  "nav.priests": "신부님소개",
+  "nav.priests": "신부님 소개",
   "nav.mass": "미사 안내",
   "nav.news": "공동체 소식",
   "nav.directions": "오시는 길",
@@ -23,7 +23,7 @@
   "about.description2": "현재 사목회를 비롯해 전례부, 레지오 마리애, 성심회 등 다양한 소공동체에서 신자들이 봉사하고 있습니다. 믿음의 여정을 함께 걸어갈 여러분을 기다립니다.",
   "history.title": "성당 연혁",
 
-  "priests.title": "신부님소개",
+  "priests.title": "신부님 소개",
   "priests.current": "현임 주임 신부",
   "priests.former": "역대 주임 신부",
   "priests.generation": "제{n}대 주임 신부",
