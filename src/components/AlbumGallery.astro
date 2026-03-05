@@ -21,29 +21,93 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
 {sorted.length === 0 ? (
   <p class="text-center text-gray-400 py-8 col-span-full">{t(locale, 'news.noAlbums')}</p>
 ) : (
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    {sorted.map(album => (
-      <a
-        href={`https://drive.google.com/drive/folders/${album.albumId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="card group block"
-      >
-        <div class="aspect-[4/3] overflow-hidden bg-gray-100">
-          <img
-            src={album.thumbUrl}
-            alt={album.title}
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
+  <>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {sorted.map(album => (
+        <button
+          type="button"
+          class="card group block text-left album-open-btn"
+          data-album-id={album.albumId}
+          data-title={album.title}
+        >
+          <div class="aspect-[4/3] overflow-hidden bg-gray-100">
+            <img
+              src={album.thumbUrl}
+              alt={album.title}
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-gray-900 text-sm group-hover:text-primary-500 transition-colors">
+              {album.title}
+            </h3>
+            <p class="text-gray-400 text-xs mt-1">{formatDate(album.date, locale)}</p>
+          </div>
+        </button>
+      ))}
+    </div>
+
+    <!-- Album Viewer Modal -->
+    <div id="album-modal" class="fixed inset-0 z-[100] hidden">
+      <div class="absolute inset-0 bg-black/70" id="album-modal-backdrop"></div>
+      <div class="relative z-10 flex flex-col h-full">
+        <div class="flex items-center justify-between px-4 py-3 bg-white shadow">
+          <h3 id="album-modal-title" class="font-bold text-gray-900 text-sm truncate mr-4"></h3>
+          <div class="flex items-center gap-3 shrink-0">
+            <a id="album-modal-external" href="#" target="_blank" rel="noopener noreferrer" class="text-primary-500 text-sm font-medium hover:underline">
+              {locale === 'ko' ? '새 창' : 'New tab'}
+            </a>
+            <button type="button" id="album-modal-close" class="p-1 text-gray-500 hover:text-gray-900">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <div class="p-4">
-          <h3 class="font-bold text-gray-900 text-sm group-hover:text-primary-500 transition-colors">
-            {album.title}
-          </h3>
-          <p class="text-gray-400 text-xs mt-1">{formatDate(album.date, locale)}</p>
-        </div>
-      </a>
-    ))}
-  </div>
+        <iframe id="album-modal-iframe" class="flex-1 bg-white" src="" title="Album Viewer"></iframe>
+      </div>
+    </div>
+  </>
 )}
+
+<script>
+  const modal = document.getElementById('album-modal');
+  const iframe = document.getElementById('album-modal-iframe') as HTMLIFrameElement;
+  const titleEl = document.getElementById('album-modal-title');
+  const externalEl = document.getElementById('album-modal-external') as HTMLAnchorElement;
+  const closeBtn = document.getElementById('album-modal-close');
+  const backdrop = document.getElementById('album-modal-backdrop');
+
+  function openAlbumModal(albumId: string, title: string) {
+    if (!modal || !iframe || !titleEl || !externalEl) return;
+    const driveUrl = `https://drive.google.com/drive/folders/${albumId}`;
+    const embedUrl = `https://drive.google.com/embeddedfolderview?id=${albumId}#grid`;
+    titleEl.textContent = title;
+    externalEl.href = driveUrl;
+    iframe.src = embedUrl;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAlbumModal() {
+    if (!modal || !iframe) return;
+    modal.classList.add('hidden');
+    iframe.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.album-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = btn as HTMLElement;
+      openAlbumModal(
+        el.dataset.albumId || '',
+        el.dataset.title || ''
+      );
+    });
+  });
+
+  closeBtn?.addEventListener('click', closeAlbumModal);
+  backdrop?.addEventListener('click', closeAlbumModal);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAlbumModal(); });
+</script>
