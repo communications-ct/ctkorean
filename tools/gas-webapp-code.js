@@ -85,8 +85,11 @@ function doGet(e) {
     case 'albums':
       data = getAlbums_();
       break;
+    case 'albumPhotos':
+      data = getAlbumPhotos_(params.id || '');
+      break;
     default:
-      data = { error: 'Unknown type. Use ?type=ann|bulletin|albums or ?mode=admin' };
+      data = { error: 'Unknown type. Use ?type=ann|bulletin|albums|albumPhotos or ?mode=admin' };
   }
 
   return ContentService
@@ -255,6 +258,40 @@ function getAlbums_() {
   });
 
   return albums;
+}
+
+/**
+ * 앨범 개별 사진 목록 — ?type=albumPhotos&id=FOLDER_ID
+ * Returns array of { id, name, mimeType }
+ */
+function getAlbumPhotos_(folderId) {
+  if (!folderId) return { error: 'id parameter required' };
+
+  try {
+    var folder = DriveApp.getFolderById(folderId);
+    var files = folder.getFiles();
+    var photos = [];
+
+    while (files.hasNext()) {
+      var file = files.next();
+      var mime = file.getMimeType();
+      if (mime.indexOf('image') !== -1) {
+        photos.push({
+          id: file.getId(),
+          name: file.getName()
+        });
+      }
+    }
+
+    // Sort by name
+    photos.sort(function(a, b) {
+      return a.name.localeCompare(b.name);
+    });
+
+    return photos;
+  } catch (e) {
+    return { error: 'Folder not found: ' + folderId };
+  }
 }
 
 // =============================================================================

@@ -14,6 +14,7 @@ interface Props {
 }
 
 const { albums, locale } = Astro.props;
+const gasBase = 'https://script.google.com/macros/s/AKfycbysgcyhqJWBNeUrIRBNwT7vqU2dEQc-ZzE4YNYZtjSf8vddUFxr9TrWVI2DU1D6Dpxa-g/exec';
 
 const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
 ---
@@ -29,7 +30,6 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
           class="card w-full flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50 transition-colors text-left album-open-btn"
           data-album-id={album.albumId}
           data-title={album.title}
-          data-thumb={album.thumbUrl}
         >
           <img
             src={album.thumbUrl}
@@ -48,74 +48,195 @@ const sorted = [...albums].sort((a, b) => b.date.localeCompare(a.date));
       ))}
     </div>
 
-    <!-- Album Modal -->
-    <div id="album-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto">
-      <div class="absolute inset-0 bg-black/70" id="album-modal-backdrop"></div>
-      <div class="relative z-10 min-h-full bg-white">
-        <!-- Sticky header with close button -->
-        <div class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-white shadow">
-          <h3 id="album-modal-title" class="font-bold text-gray-900 text-sm truncate mr-4"></h3>
-          <div class="flex items-center gap-3 shrink-0">
-            <a id="album-modal-drive" href="#" target="_blank" rel="noopener noreferrer"
-              class="text-primary-500 text-sm font-medium hover:underline">
-              {locale === 'ko' ? 'Google Drive' : 'Google Drive'}
-            </a>
-            <button type="button" id="album-modal-close"
-              class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-              {locale === 'ko' ? '닫기' : 'Close'}
-            </button>
-          </div>
+    <!-- Album Gallery Modal -->
+    <div id="album-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto bg-gray-50">
+      <!-- Sticky header -->
+      <div class="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-white shadow-sm">
+        <div class="flex items-center gap-2 min-w-0">
+          <h3 id="album-modal-title" class="font-bold text-gray-900 text-sm truncate"></h3>
+          <span id="album-modal-count" class="text-xs text-gray-400 shrink-0"></span>
         </div>
-        <!-- Content: Drive embed iframe -->
-        <iframe
-          id="album-modal-iframe"
-          class="w-full bg-white"
-          style="height: calc(100vh - 52px);"
-          src="about:blank"
-          title="Album Viewer"
-        ></iframe>
+        <div class="flex items-center gap-3 shrink-0">
+          <a id="album-modal-drive" href="#" target="_blank" rel="noopener noreferrer"
+            class="text-primary-500 text-sm font-medium hover:underline hidden sm:inline">
+            Google Drive
+          </a>
+          <button type="button" id="album-modal-close"
+            class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            {locale === 'ko' ? '닫기' : 'Close'}
+          </button>
+        </div>
       </div>
+
+      <!-- Gallery grid -->
+      <div id="album-modal-gallery" class="max-w-6xl mx-auto px-4 py-6">
+        <!-- Loading -->
+        <div id="album-loading" class="flex flex-col items-center justify-center py-20">
+          <div class="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+          <p class="mt-3 text-gray-400 text-sm">{locale === 'ko' ? '사진을 불러오는 중...' : 'Loading photos...'}</p>
+        </div>
+        <!-- Photo grid (filled by JS) -->
+        <div id="album-grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+        <!-- Error -->
+        <div id="album-error" class="hidden text-center py-20">
+          <p class="text-gray-500">{locale === 'ko' ? '사진을 불러올 수 없습니다.' : 'Could not load photos.'}</p>
+          <a id="album-error-link" href="#" target="_blank" rel="noopener noreferrer"
+            class="inline-block mt-3 px-4 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition-colors">
+            {locale === 'ko' ? 'Google Drive에서 보기' : 'View on Google Drive'}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="album-lightbox" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/90">
+      <button type="button" id="lightbox-close" class="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+      <button type="button" id="lightbox-prev" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <button type="button" id="lightbox-next" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+      <img id="lightbox-img" src="" alt="" class="max-w-[90vw] max-h-[85vh] object-contain" />
+      <div id="lightbox-counter" class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-black/50 px-3 py-1 rounded-full"></div>
     </div>
   </>
 )}
 
-<script>
+<script define:vars={{ gasBase }}>
   const modal = document.getElementById('album-modal');
-  const iframe = document.getElementById('album-modal-iframe') as HTMLIFrameElement;
   const titleEl = document.getElementById('album-modal-title');
-  const driveLink = document.getElementById('album-modal-drive') as HTMLAnchorElement;
+  const countEl = document.getElementById('album-modal-count');
+  const driveLink = document.getElementById('album-modal-drive');
   const closeBtn = document.getElementById('album-modal-close');
-  const backdrop = document.getElementById('album-modal-backdrop');
+  const grid = document.getElementById('album-grid');
+  const loading = document.getElementById('album-loading');
+  const errorEl = document.getElementById('album-error');
+  const errorLink = document.getElementById('album-error-link');
 
-  function openAlbum(albumId: string, title: string) {
-    if (!modal || !iframe || !titleEl || !driveLink) return;
+  const lightbox = document.getElementById('album-lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxCounter = document.getElementById('lightbox-counter');
+  const lightboxClose = document.getElementById('lightbox-close');
+  const lightboxPrev = document.getElementById('lightbox-prev');
+  const lightboxNext = document.getElementById('lightbox-next');
+
+  let photos = [];
+  let currentIndex = 0;
+  let photoCache = {};
+
+  function imgUrl(fileId, width) {
+    return `https://lh3.googleusercontent.com/d/${fileId}=w${width}`;
+  }
+
+  async function openAlbum(albumId, title) {
+    if (!modal || !titleEl || !grid) return;
     const driveUrl = `https://drive.google.com/drive/folders/${albumId}`;
-    const embedUrl = `https://drive.google.com/embeddedfolderview?id=${albumId}#grid`;
     titleEl.textContent = title;
-    driveLink.href = driveUrl;
-    iframe.src = embedUrl;
+    if (countEl) countEl.textContent = '';
+    if (driveLink) driveLink.href = driveUrl;
+    if (errorLink) errorLink.href = driveUrl;
+
+    loading.classList.remove('hidden');
+    grid.classList.add('hidden');
+    errorEl.classList.add('hidden');
+    grid.innerHTML = '';
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // Check cache
+    if (photoCache[albumId]) {
+      renderPhotos(photoCache[albumId]);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${gasBase}?type=albumPhotos&id=${albumId}`);
+      const data = await res.json();
+      if (data.error || !Array.isArray(data)) throw new Error(data.error || 'Invalid response');
+      photoCache[albumId] = data;
+      renderPhotos(data);
+    } catch (e) {
+      loading.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  function renderPhotos(list) {
+    photos = list;
+    loading.classList.add('hidden');
+    if (countEl) countEl.textContent = `(${list.length})`;
+
+    list.forEach((photo, idx) => {
+      const div = document.createElement('div');
+      div.className = 'aspect-square overflow-hidden rounded-lg bg-gray-200 cursor-pointer group';
+      div.innerHTML = `<img src="${imgUrl(photo.id, 400)}" alt="${photo.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />`;
+      div.addEventListener('click', () => openLightbox(idx));
+      grid.appendChild(div);
+    });
+
+    grid.classList.remove('hidden');
+  }
+
+  function openLightbox(idx) {
+    if (!lightbox || !lightboxImg) return;
+    currentIndex = idx;
+    updateLightbox();
+    lightbox.classList.remove('hidden');
+    lightbox.classList.add('flex');
+  }
+
+  function updateLightbox() {
+    if (!photos[currentIndex]) return;
+    lightboxImg.src = imgUrl(photos[currentIndex].id, 1200);
+    lightboxImg.alt = photos[currentIndex].name;
+    if (lightboxCounter) lightboxCounter.textContent = `${currentIndex + 1} / ${photos.length}`;
+  }
+
+  function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.classList.add('hidden');
+    lightbox.classList.remove('flex');
+    lightboxImg.src = '';
   }
 
   function closeAlbum() {
-    if (!modal || !iframe) return;
+    if (!modal) return;
+    closeLightbox();
     modal.classList.add('hidden');
-    iframe.src = 'about:blank';
     document.body.style.overflow = '';
   }
 
   document.querySelectorAll('.album-open-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const el = btn as HTMLElement;
+      const el = btn;
       openAlbum(el.dataset.albumId || '', el.dataset.title || '');
     });
   });
 
   closeBtn?.addEventListener('click', closeAlbum);
-  backdrop?.addEventListener('click', closeAlbum);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAlbum(); });
+  lightboxClose?.addEventListener('click', closeLightbox);
+  lightboxPrev?.addEventListener('click', () => { currentIndex = (currentIndex - 1 + photos.length) % photos.length; updateLightbox(); });
+  lightboxNext?.addEventListener('click', () => { currentIndex = (currentIndex + 1) % photos.length; updateLightbox(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (lightbox && !lightbox.classList.contains('hidden')) {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') { currentIndex = (currentIndex - 1 + photos.length) % photos.length; updateLightbox(); }
+      if (e.key === 'ArrowRight') { currentIndex = (currentIndex + 1) % photos.length; updateLightbox(); }
+    } else if (modal && !modal.classList.contains('hidden')) {
+      if (e.key === 'Escape') closeAlbum();
+    }
+  });
 </script>
