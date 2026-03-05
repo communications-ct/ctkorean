@@ -45,6 +45,41 @@ function genLabel(n: number): string {
       </div>
     </section>
 
+    <!-- History Timeline -->
+    <section class="pb-20">
+      <div class="max-w-6xl mx-auto px-4">
+        <h3 class="text-2xl font-bold text-center text-gray-900 mb-10">{t(locale, 'history.title')}</h3>
+        <div class="relative max-w-3xl mx-auto">
+          {/* Vertical line */}
+          <div class="absolute left-4 sm:left-1/2 sm:-translate-x-px top-0 bottom-0 w-0.5 bg-primary-200"></div>
+
+          {[
+            { year: '1978', text: '커네티컷 한인 가톨릭 공동체 첫 미사 봉헌' },
+            { year: '1992', text: '공동체 승격 — 정식 한인 가톨릭 공동체로 인준' },
+            { year: '2001', text: '웨덜스필드(Wethersfield) 현 성당으로 이전, 새로운 터전 마련' },
+            { year: '2019', text: '준본당 승격 — 하트포드 대교구 소속 준본당으로 승격' },
+            { year: '2022', text: '제11대 이상선 요셉 주임 신부님(서울 대교구) 부임' },
+          ].map((item, idx) => (
+            <div class:list={[
+              'relative flex items-start mb-8 last:mb-0',
+              'sm:even:flex-row-reverse'
+            ]}>
+              {/* Dot */}
+              <div class="absolute left-4 sm:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary-500 border-2 border-white shadow mt-1.5"></div>
+              {/* Content */}
+              <div class:list={[
+                'ml-10 sm:ml-0 sm:w-[calc(50%-2rem)]',
+                idx % 2 === 0 ? 'sm:pr-4 sm:text-right' : 'sm:pl-4 sm:text-left'
+              ]}>
+                <span class="inline-block px-3 py-1 text-sm font-bold text-primary-600 bg-primary-50 rounded-full mb-1">{item.year}</span>
+                <p class="text-gray-700 leading-relaxed">{item.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
     <!-- Priests -->
     <section id="priests" class="py-20 bg-gray-50">
       <div class="max-w-6xl mx-auto px-4">
