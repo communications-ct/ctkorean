@@ -51,10 +51,7 @@ const navItems = [
       <!-- Logo -->
       <a href={homePath} class="flex items-center gap-2 shrink-0" aria-label={t(locale, 'site.title')}>
         <!-- Sacred Heart Logo -->
-        <svg class="w-8 h-8 text-red-700 shrink-0" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-          <path d="M50 90C50 90 10 60 10 35C10 20 22 10 35 10C42 10 48 14 50 18C52 14 58 10 65 10C78 10 90 20 90 35C90 60 50 90 50 90Z" fill="currentColor"/>
-          <path d="M46 8h8v20h20v8H54v35h-8V36H26v-8h20z" fill="white"/>
-        </svg>
+        <img src={`${basePath}/logo.png`} alt="Logo" class="w-10 h-10 shrink-0 object-contain" />
         {locale === 'ko' ? (
           <div class="flex flex-col leading-tight min-w-0">
             <span class="text-xs sm:text-sm lg:text-base font-bold text-gray-900 truncate">예수성심 천주교 커네티컷 성당</span>
