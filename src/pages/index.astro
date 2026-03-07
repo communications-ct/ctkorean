@@ -6,7 +6,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <head>
   <meta charset="UTF-8" />
   <script is:inline define:vars={{ base }}>
-    window.location.replace(base + '/ko/');
+    var lang = (navigator.language || '').toLowerCase();
+    var locale = lang.startsWith('ko') ? 'ko' : 'en';
+    window.location.replace(base + '/' + locale + '/');
   </script>
   <meta http-equiv="refresh" content={`0;url=${base}/ko/`} />
 </head>
