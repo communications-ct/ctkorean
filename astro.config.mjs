@@ -11,6 +11,7 @@ export default defineConfig({
     locales: ['ko', 'en'],
     routing: {
       prefixDefaultLocale: true,
+      redirectToDefaultLocale: false,
     },
   },
   output: 'static',
