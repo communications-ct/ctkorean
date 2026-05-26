@@ -1,0 +1,352 @@
+/* =============================================================
+ * Sacred Heart Korean Catholic Parish — Custom Styles
+ * Target: alphonsus-child theme, WordPress Customizer "Additional CSS"
+ * Design tokens mirror the Astro reference site.
+ * Last updated: 2026-05-26
+ * ============================================================= */
+
+/* ---- 1. Font (Noto Sans KR for Korean readability) ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+:root {
+  /* Brand colors (from Astro reference) */
+  --shk-primary:        #3A66B0;
+  --shk-primary-dark:   #2A4F8A;
+  --shk-primary-light:  #6589CC;
+  --shk-primary-50:     #EEF2FA;
+  --shk-accent:         #C9A227;        /* liturgical gold */
+
+  /* Neutrals */
+  --shk-ink:            #1F2937;
+  --shk-ink-soft:       #4B5563;
+  --shk-line:           #E5E7EB;
+  --shk-bg:             #FFFFFF;
+  --shk-bg-soft:        #F7F8FB;
+
+  /* Layout */
+  --shk-radius:         10px;
+  --shk-radius-lg:      16px;
+  --shk-shadow:         0 1px 3px rgba(17,24,39,.06), 0 8px 24px rgba(17,24,39,.06);
+  --shk-shadow-hover:   0 4px 8px rgba(17,24,39,.08), 0 16px 40px rgba(17,24,39,.10);
+  --shk-maxw:           1200px;
+}
+
+/* ---- 2. Global typography ----------------------------------- */
+html[lang="ko"] body,
+html[lang="ko-KR"] body,
+body.translated-ko,
+body {
+  font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  color: var(--shk-ink);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6,
+.entry-title,
+.page-title {
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--shk-ink);
+  letter-spacing: -0.025em;
+  word-break: keep-all;
+}
+
+h1, .entry-title { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.25; }
+h2 { font-size: clamp(1.4rem, 2.2vw, 1.875rem); line-height: 1.3; margin-top: 2em; }
+h3 { font-size: 1.25rem; line-height: 1.4; margin-top: 1.5em; }
+
+p { line-height: 1.75; margin-bottom: 1em; }
+
+a { color: var(--shk-primary); text-decoration: none; transition: color .15s; }
+a:hover { color: var(--shk-primary-dark); text-decoration: underline; }
+
+/* ---- 3. Site header / navigation ---------------------------- */
+.site-header,
+header.site-header {
+  background: var(--shk-bg);
+  box-shadow: 0 1px 0 var(--shk-line);
+}
+
+.mega-menu-link,
+nav.main-navigation a {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--shk-ink) !important;
+}
+.mega-menu-link:hover,
+nav.main-navigation a:hover {
+  color: var(--shk-primary) !important;
+}
+
+/* GTranslate language switcher polish */
+.gtranslate_wrapper {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 12px;
+}
+.gtranslate_wrapper select,
+.gtranslate_wrapper a.glink {
+  border: 1px solid var(--shk-line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--shk-ink);
+  background: var(--shk-bg);
+}
+
+/* ---- 4. Hero / slick slider --------------------------------- */
+.slick-slider .slick-slide img,
+.hero-slider img {
+  border-radius: var(--shk-radius-lg);
+  object-fit: cover;
+}
+.slick-dots li button:before {
+  color: var(--shk-primary) !important;
+  opacity: .35;
+}
+.slick-dots li.slick-active button:before {
+  color: var(--shk-primary) !important;
+  opacity: 1;
+}
+
+/* ---- 5. Reusable card / section components ------------------ */
+.shk-section {
+  max-width: var(--shk-maxw);
+  margin: 0 auto;
+  padding: 4rem 1.25rem;
+}
+.shk-section--alt { background: var(--shk-bg-soft); }
+
+.shk-section-title {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.shk-section-title h2 { margin-top: 0; }
+.shk-section-title .lead {
+  color: var(--shk-ink-soft);
+  font-size: 1.05rem;
+  max-width: 720px;
+  margin: .5rem auto 0;
+}
+
+/* Card grid (used by priests, ministries, albums, bulletins) */
+.shk-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.shk-grid--3 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.shk-grid--4 { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+
+.shk-card {
+  background: var(--shk-bg);
+  border: 1px solid var(--shk-line);
+  border-radius: var(--shk-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.shk-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shk-shadow-hover);
+  border-color: var(--shk-primary-light);
+}
+.shk-card img,
+.shk-card .shk-card-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--shk-bg-soft);
+}
+.shk-card-body { padding: 1rem 1.1rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+.shk-card-title { font-weight: 700; font-size: 1.05rem; margin: 0 0 .25rem; color: var(--shk-ink); }
+.shk-card-meta  { font-size: .85rem; color: var(--shk-ink-soft); margin-bottom: .5rem; }
+.shk-card-text  { font-size: .95rem; color: var(--shk-ink-soft); line-height: 1.6; }
+
+/* Priest card variant — square portrait */
+.shk-card--priest .shk-card-img { aspect-ratio: 1 / 1; }
+.shk-card--priest .shk-card-title { font-size: 1.1rem; }
+.shk-badge {
+  display: inline-block;
+  background: var(--shk-primary-50);
+  color: var(--shk-primary-dark);
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ---- 6. Mass schedule table -------------------------------- */
+.shk-mass-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--shk-bg);
+  border: 1px solid var(--shk-line);
+  border-radius: var(--shk-radius);
+  overflow: hidden;
+}
+.shk-mass-table th,
+.shk-mass-table td {
+  padding: .9rem 1.1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--shk-line);
+}
+.shk-mass-table tr:last-child td { border-bottom: 0; }
+.shk-mass-table th {
+  background: var(--shk-primary-50);
+  color: var(--shk-primary-dark);
+  font-weight: 700;
+  width: 38%;
+}
+
+/* ---- 7. Bulletin list (PDF cards) -------------------------- */
+.shk-bulletin-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--shk-line);
+  border-radius: var(--shk-radius);
+  background: var(--shk-bg);
+  transition: border-color .15s, box-shadow .15s;
+  margin-bottom: .75rem;
+}
+.shk-bulletin-card:hover {
+  border-color: var(--shk-primary-light);
+  box-shadow: var(--shk-shadow);
+}
+.shk-bulletin-card .shk-pdf-icon {
+  flex: 0 0 48px;
+  width: 48px; height: 56px;
+  background: var(--shk-primary-50);
+  color: var(--shk-primary-dark);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .75rem;
+}
+.shk-bulletin-card .shk-bulletin-meta { flex: 1; }
+.shk-bulletin-card .shk-bulletin-title { font-weight: 600; color: var(--shk-ink); margin: 0 0 .15rem; }
+.shk-bulletin-card .shk-bulletin-date  { font-size: .85rem; color: var(--shk-ink-soft); }
+.shk-bulletin-card .shk-bulletin-actions a {
+  display: inline-block;
+  padding: .4rem .8rem;
+  border: 1px solid var(--shk-primary);
+  color: var(--shk-primary);
+  border-radius: 6px;
+  font-size: .85rem;
+  margin-left: .35rem;
+}
+.shk-bulletin-card .shk-bulletin-actions a:hover {
+  background: var(--shk-primary);
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ---- 8. Album grid (gallery) ------------------------------ */
+.shk-album-cover {
+  position: relative;
+  display: block;
+  border-radius: var(--shk-radius);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+.shk-album-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+.shk-album-cover:hover img { transform: scale(1.04); }
+.shk-album-cover::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%);
+  pointer-events: none;
+}
+.shk-album-cover .shk-album-label {
+  position: absolute;
+  left: .75rem; bottom: .65rem; right: .75rem;
+  color: #fff;
+  font-weight: 600;
+  font-size: .95rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,.4);
+  z-index: 2;
+}
+
+/* ---- 9. Buttons ------------------------------------------- */
+.shk-btn,
+.wp-block-button .wp-block-button__link {
+  display: inline-block;
+  padding: .7rem 1.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  background: var(--shk-primary);
+  color: #fff !important;
+  border: 1px solid var(--shk-primary);
+  transition: background .15s, transform .1s;
+}
+.shk-btn:hover,
+.wp-block-button .wp-block-button__link:hover {
+  background: var(--shk-primary-dark);
+  color: #fff !important;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+.shk-btn--ghost {
+  background: transparent;
+  color: var(--shk-primary) !important;
+}
+.shk-btn--ghost:hover { background: var(--shk-primary-50); color: var(--shk-primary-dark) !important; }
+
+/* ---- 10. Mass / contact info blocks ---------------------- */
+.shk-info-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.shk-info-block {
+  border: 1px solid var(--shk-line);
+  border-radius: var(--shk-radius);
+  padding: 1.25rem;
+  background: var(--shk-bg);
+}
+.shk-info-block .label { font-size: .8rem; color: var(--shk-ink-soft); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.shk-info-block .value { font-size: 1.05rem; color: var(--shk-ink); font-weight: 500; margin-top: .15rem; }
+
+/* ---- 11. Footer ------------------------------------------ */
+footer.site-footer,
+.site-footer {
+  background: var(--shk-ink);
+  color: #C7CDD7;
+}
+.site-footer a { color: #C7CDD7; }
+.site-footer a:hover { color: #fff; }
+.site-footer h3, .site-footer h4 { color: #fff; }
+
+/* ---- 12. Donate button (existing) - polish --------------- */
+.donate-button img {
+  border-radius: var(--shk-radius);
+  transition: transform .15s;
+}
+.donate-button:hover img { transform: translateY(-2px); }
+
+/* ---- 13. Calendar widget polish (Simple Calendar) -------- */
+.simcal-calendar .simcal-day-has-events { background: var(--shk-primary-50) !important; }
+.simcal-event-title { color: var(--shk-primary-dark) !important; }
+
+/* ---- 14. Responsive tweaks ------------------------------- */
+@media (max-width: 640px) {
+  .shk-section { padding: 2.5rem 1rem; }
+  h1, .entry-title { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  .shk-mass-table th, .shk-mass-table td { padding: .7rem .8rem; font-size: .92rem; }
+  .shk-mass-table th { width: 42%; }
+}
+
+/* ---- 15. Print (bulletins printable) --------------------- */
+@media print {
+  .site-header, .site-footer, .donate-button, .gtranslate_wrapper { display: none !important; }
+  body { color: #000; background: #fff; }
+}
